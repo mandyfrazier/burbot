@@ -1,0 +1,359 @@
+---
+title: "burbot_assembly"
+author: "Amanda"
+date: "3/27/2018"
+output: md_document
+---
+
+
+
+# List of references
+http://oyster-river-protocol.readthedocs.io/en/latest/
+
+# Setting up an AWS instance for the first time: 
+
+Followed the "Launch a Linux Virtual Machine" tutorial on AWS to learn how to create a new Amazon instance (https://aws.amazon.com/getting-started/tutorials/launch-a-virtual-machine/) 
+
+Accoring to the Oyster River Protocol (https://github.com/macmanes-lab/orp_website/blob/master/aws_setup.md) we want to run everything on a standard Ubuntu 16.04 machine, so I selected this type of instance in AWS. Set up the instance with the default settings. Downloaded my key (mandykey), which is required to access the instance from the Terminal. 
+
+You must move the key from the Downloads file to your ssh folder and make the key invisible: 
+
+```{bash}
+mv ~/Downloads/mandykey.pem ~/.ssh/mandykey.pem
+chmod 400 ~/.ssh/mandykey.pem
+```
+
+To connect to the instance in the Terminal, you have to go to the instance and retrieve the Public DNS (ec2... blah blah). This will change every time you log on, so you'll have to check every time. Now you can log on through the Terminal:
+
+```{bash}
+
+ssh -i ~/.ssh/mandykey.pem -l ubuntu ec2-52-26-211-159.us-west-2.compute.amazonaws.com
+
+```
+
+When you are done running whatever you are doing, go back to your AWS webpage, right click on "Running" under the "Instance State" tab, scroll to "Instance State" and click "Stop". Do not click "Terminate", because this will kill the instance. You need to stop your instance when you're done so that you don't get charged for hours that you're not actually using! 
+
+#Create Alarms: 
+What happens if you forget to stop your instance? What happens if a major job fails when you're using a higher powered (=expensive) computer and you don't realize? You get charged for hours that you're not using! This is why we want to create an alarm to stop the instance when it's not in use. Here are the settings I chose:
+Under "Create Alarm": 
+- Send a notification to "InstanceStopped" with these recipients: ajfrazier@ucdavis.edu
+- Take the action "Stop this instance"
+- Whenever "Average" of "CPU utilization" is <= 1% for at least 1 consecutive period(s) of 1 hour. 
+
+
+#Install Programs: 
+
+I followed the installation instructions of the Oyster River protocol: (https://github.com/macmanes-lab/orp_website/blob/master/aws_setup.md)
+
+Update software and install linuxy things from apt-get: 
+```{bash}
+
+sudo apt-get update && sudo apt-get -y upgrade && sudo apt-get -y install ruby build-essential mcl python python-pip default-jre
+
+```
+
+
+Install linux brew: 
+```{bash}
+
+sudo mkdir /home/linuxbrew
+sudo chown $USER:$USER /home/linuxbrew
+git clone https://github.com/Linuxbrew/brew.git /home/linuxbrew/.linuxbrew
+echo 'export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"' >> ~/.profile
+echo 'export MANPATH="/home/linuxbrew/.linuxbrew/share/man:$MANPATH"' >> ~/.profile
+echo 'export INFOPATH="/home/linuxbrew/.linuxbrew/share/info:$INFOPATH"' >> ~/.profile
+source ~/.profile
+brew tap brewsci/science
+brew tap brewsci/bio
+brew update
+brew install gcc python metis parallel
+
+```
+
+Install python modules:
+```{bash}
+
+pip install cvxopt numpy biopython scipy
+pip install --upgrade pip
+
+```
+
+Install the Oyster River Protocol:
+```{bash}
+
+git clone https://github.com/macmanes-lab/Oyster_River_Protocol.git
+cd Oyster_River_Protocol
+make -j4
+
+### Make sure to add the items to your profile file, as needed.
+### Make sure to ```source``` the profile file after, to make sure everything is loaded. 
+
+
+```
+
+Set up BUSCO:
+```{bash}
+
+# Download databases
+mkdir $HOME/Oyster_River_Protocol/busco_dbs && cd $HOME/Oyster_River_Protocol/busco_dbs
+
+# Eukaryota
+wget http://busco.ezlab.org/v2/datasets/eukaryota_odb9.tar.gz
+wget http://busco.ezlab.org/v2/datasets/fungi_odb9.tar.gz
+wget http://busco.ezlab.org/v2/datasets/metazoa_odb9.tar.gz
+wget http://busco.ezlab.org/v2/datasets/nematoda_odb9.tar.gz
+wget http://busco.ezlab.org/v2/datasets/arthropoda_odb9.tar.gz
+wget http://busco.ezlab.org/v2/datasets/insecta_odb9.tar.gz
+wget http://busco.ezlab.org/v2/datasets/vertebrata_odb9.tar.gz
+wget http://busco.ezlab.org/v2/datasets/tetrapoda_odb9.tar.gz
+wget http://busco.ezlab.org/v2/datasets/aves_odb9.tar.gz
+wget http://busco.ezlab.org/v2/datasets/mammalia_odb9.tar.gz
+
+tar -zxf eukaryota_odb9.tar.gz
+cd
+
+### Move and edit config file (change everyplace it says `mmacmane` to your user name)
+
+mv $HOME/Oyster_River_Protocol/software/config.ini $HOME/Oyster_River_Protocol/software/busco/config/config.ini
+
+nano $HOME/Oyster_River_Protocol/software/busco/config/config.ini
+
+
+### add this line under the `[busco] line`
+
+lineage_path = $HOME/Oyster_River_Protocol/busco_dbs/eukaryota_odb9
+
+### obviously, if you're using another database, that name will change.
+
+
+```
+
+Test the installation: 
+```{bash}
+cd $HOME/Oyster_River_Protocol/sampledata
+
+../oyster.mk main \
+MEM=15 \
+CPU=8 \
+READ1=test.1.fq.gz \
+READ2=test.2.fq.gz \
+RUNOUT=test
+```
+
+Testing the installation didn't work (error: "*** SALMON is not installed, must fix ***"), so we looked in all the bin's to find where these types of programs were installed. In /home/ubuntu/Oyster_River_Protocol there is a "pathfile" that has specified the path to a bunch of things (e.g. blast, transrate, etc.) but not salmon, so we added the location of salmon to the end of the pathfile, hoping that this would specify where Salmon is installed and then it would run. 
+
+```{bash}
+PATH=$PATH:/home/ubuntu/Oyster_River_Protocol/software/orp-transrate/bin 
+```
+
+
+#Notes on installing...
+Welp, trying to install everything using the "streamlined" ORP makefile didn't work. It didn't correctly install all the dependnecies etc. We think it's the best move to start a new Amazon Instance and just install everything piecemiel myself. 
+
+#Script to run trinity:
+```{bash}
+
+#!/bin/bash
+
+echo "Running trinity..."
+
+~/Oyster_River_Protocol/software/trinityrnaseq/Trinity --seqType fq --max_memory 1G --CPU 1 --output Rcorr_trinity --full_cleanup --left test.1.cor.fq --right test.2.cor.fq --no_normalize_reads --no_bowtie
+
+```
+
+
+#Install linuxy things from apt-get: 
+```{bash}
+
+sudo apt-get update && sudo apt-get -y upgrade && sudo apt-get -y install ruby build-essential mcl python python-pip default-jre
+
+```
+
+Install linux brew: 
+```{bash}
+
+sudo mkdir /home/linuxbrew
+sudo chown $USER:$USER /home/linuxbrew
+git clone https://github.com/Linuxbrew/brew.git /home/linuxbrew/.linuxbrew
+echo 'export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"' >> ~/.profile
+echo 'export MANPATH="/home/linuxbrew/.linuxbrew/share/man:$MANPATH"' >> ~/.profile
+echo 'export INFOPATH="/home/linuxbrew/.linuxbrew/share/info:$INFOPATH"' >> ~/.profile
+source ~/.profile
+brew tap brewsci/science
+brew tap brewsci/bio
+brew update
+brew install gcc python metis parallel
+
+```
+
+Install python modules:
+```{bash}
+
+pip install cvxopt numpy biopython scipy
+pip install --upgrade pip
+
+```
+
+# Install test data (just a random sample that Erin picked) set on my AWS Instance:
+```{bash}
+mkdir testburbot
+
+wget http://slimsdata.genomecenter.ucdavis.edu/Data/xzsdtmj958/UnalignedL2toL5/Project_ATMF_L2_H1181P_Frazier/burbot-Ma01-C_S179_L002_R1_001.fastq.gz
+
+wget http://slimsdata.genomecenter.ucdavis.edu/Data/xzsdtmj958/UnalignedL2toL5/Project_ATMF_L2_H1181P_Frazier/burbot-Ma01-C_S179_L002_R2_001.fastq.gz
+
+
+#Extract first 100000 reads from random burbot sample. This will be the test burbot set. 
+for filename in *.fastq.gz; do gunzip -c $filename | head -400000 | gzip > "$filename.extract.fastq.gz"; done
+
+#Ugh, filenames are weird. Correct this:
+mv burbot-Ma01-C_S179_L002_R1_001.fastq.gz.extract.fastq.gz burbot-Ma01-C_S179_L002_R1_001.extract.fastq.gz
+mv burbot-Ma01-C_S179_L002_R2_001.fastq.gz.extract.fastq.gz burbot-Ma01-C_S179_L002_R2_001.extract.fastq.gz
+
+```
+
+# Install programs (separately)
+Rcorrector
+```{bash}
+# https://github.com/mourisl/Rcorrector
+https://gigascience.biomedcentral.com/articles/10.1186/s13742-015-0089-y
+
+git clone https://github.com/mourisl/rcorrector.git #clone the rcorrector github repo
+
+make #Run this in the rcorrector directory. This script will install rcorrector and install jellyfish2 if you don't already have it. 
+
+perl run_rcorrector.pl -1 Sample/sample_read1.fq -2 Sample/sample_read2.fq #test rcorrector using their test data -- success!
+
+```
+
+Run rcorrector on my test burbot dataset
+```{bash}
+cd rcorrector
+
+perl ~/rcorrector/run_rcorrector.pl -1 /home/ubuntu/testburbot/burbot-Ma01-C_S179_L002_R1_001.extract.fastq.gz -2 /home/ubuntu/testburbot/burbot-Ma01-C_S179_L002_R2_001.extract.fastq.gz 
+
+#Success!
+
+```
+
+Install Trinity. Trimmomatic will be installed with Trinity. 
+```{bash}
+
+https://github.com/trinityrnaseq/trinityrnaseq/wiki/Installing-Trinity
+
+wget https://github.com/trinityrnaseq/trinityrnaseq/releases/download/Trinity-v2.6.6/Trinityrnaseq-v2.6.6.wExtSampleData.tar.gz
+
+tar -xvf Trinityrnaseq-v2.6.6.wExtSampleData.tar.gz
+
+make
+make plugins #Install plugins for downstream analyses 
+make install #Install Trinity in a central location. This didn't work, but it's not required so moving on. 
+
+#Passed all of the installation tests 
+
+rm Trinityrnaseq-v2.6.6.wExtSampleData.tar.gz 
+
+#Failed the Trinity test data set. "Error, cannot find samtools. Please be sure samtools is installed and included in your PATH setting."
+
+```
+
+Install Samtools:
+```{bash}
+https://gist.github.com/adefelicibus/f6fd06df1b4bb104ceeaccdd7325b856
+
+wget https://github.com/samtools/samtools/releases/download/1.3.1/samtools-1.3.1.tar.bz2 -O samtools.tar.bz2
+tar -xjvf samtools.tar.bz2
+cd samtools-1.3.1
+make
+
+rm samtools.tar.bz2
+```
+
+Install conda and Bowtie2:
+```{bash}
+http://www.xavierdupre.fr/app/pymyinstall/helpsphinx/blog/2015/2015-11-01_anaconda_ssh.html
+
+curl 'https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh' > Miniconda3.sh
+bash Miniconda3.sh
+cd /home/ubuntu/miniconda3/bin
+./conda update conda
+
+conda config --add channels defaults
+conda config --add channels conda-forge
+conda config --add channels bioconda
+
+conda install bowtie2
+conda update bowtie2
+
+```
+
+Install Salmon: 
+```{bash}
+
+conda install salmon
+conda update salmon
+
+```
+
+Add things to my path so they can be run universally! 
+```{bash}
+#To check what is in your global path:
+echo $PATH
+
+#To add something permanently to your global path: 
+
+export PATH=$PATH:/{path to program}
+export PATH=$PATH:/home/ubuntu/Trinityrnaseq-v2.6.6
+export PATH=$PATH:/home/ubuntu/rcorrector/jellyfish/bin
+export PATH=$PATH:/home/ubuntu/samtools-1.3.1
+export PATH=$PATH:/home/ubuntu/miniconda3/bin
+export PATH=$PATH:/
+source ~/.profile 
+#or
+source ~/.bashrc
+
+```
+
+
+Test Trinity:
+```{bash}
+#On Trinity test set:
+cd sample_data/test_Trinity_Assembly/
+./runMe.sh
+
+#On burbot:
+cd /home/ubuntu/testburbot
+
+#!/bin/bash
+
+echo "Running trinity..."
+
+~/Oyster_River_Protocol/software/trinityrnaseq/Trinity --seqType fq --max_memory 1G --CPU 1 --output Rcorr_trinity --full_cleanup --left test.1.cor.fq --right test.2.cor.fq --no_normalize_reads --no_bowtie
+
+```
+
+Busco
+
+
+# Download sequence data to AWS 
+Parallelize everything so they run at the same time.
+
+# Create file management folders
+
+# Error Correct 
+
+Link to github
+
+Publication
+
+Copyright 
+
+```{bash, eval=FALSE}
+
+
+
+
+```
+
+
+
