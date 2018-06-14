@@ -29,7 +29,7 @@ To connect to the instance in the Terminal, you have to go to the instance and r
 
 ```{bash}
 
-ssh -i ~/.ssh/mandykey.pem -l ubuntu ec2-54-203-158-28.us-west-2.compute.amazonaws.com
+ssh -i ~/.ssh/mandykey.pem -l ubuntu ec2-35-166-55-218.us-west-2.compute.amazonaws.com
 
 ```
 
@@ -246,7 +246,7 @@ df -h
 ```{bash}
 mkdir testburbot
 
-wget http://slimsdata.genomecenter.ucdavis.edu/Data/xzsdtmj958/UnalignedL2toL5/Project_ATMF_L2_H1181P_Frazier/burbot-Ma01-C_S179_L002_R1_001.fastq.gz
+wget http://slimsdata.genomecenter.ucdavis.edu/Data/xzsdtmj958/UnalignedL2toL5/Project_ATMF_L2_H1181P_Frazier/burbot-Ma01-C_S179_L002_R2_001.fastq.gz
 
 wget http://slimsdata.genomecenter.ucdavis.edu/Data/xzsdtmj958/UnalignedL2toL5/Project_ATMF_L2_H1181P_Frazier/burbot-Ma01-C_S179_L002_R2_001.fastq.gz
 
@@ -295,24 +295,40 @@ done
 #Success!
 
   
-  
-
-
-
 
 ```
 
-# Script to run rcorrector on all the sequence files: 
+#Rcorrector 
+##Script
+Script "runRcorrector.sh" to run Rcorrector on the concatenated fastq files. 
 ```{bash}
 
-for infile in *R1_001.fastq.gz
+#!/bin/bash 
+
+for infile in *R1.fastq.gz
 do
-    base=$(basename $infile R1_001.fastq.gz)
-    perl ~/rcorrector/run_rcorrector.pl -1 ${base}R1_001.fastq.gz -2 ${base}R2_001.fastq.gz -k 32 -t 30
+    base=$(basename $infile R1.fastq.gz)
+    perl ~/rcorrector/run_rcorrector.pl -1 ${base}R1.fastq.gz -2 ${base}R2.fastq.gz -k 32 -t 6 -od ../Rcorrected -verbose
 done
 
 #For rcorrector, specify a kmer length of 32 (this is the max kmer length). This makes sense for your data because you have long reads. Default is 23. 
 # t=30 is 30 threads to parallelize to decrease running time. Erin's took 20 hours to run 
+
+```
+
+Running runRcorrector.sh
+```{bash}
+
+#On AWS, increased instance size to t2.2xlarge 
+
+cd data/
+mkdir Rcorrected 
+cd data/concat
+
+chmod u+x runRcorrector.sh 
+
+
+nohup ./runRcorrector.sh >runRcorrectorLog.sh &
 
 ```
 
@@ -371,7 +387,7 @@ conda update bowtie2
 
 ```
 
-Install Salmon: 
+# Install Salmon: 
 ```{bash}
 
 conda install salmon
@@ -672,11 +688,14 @@ wget http://busco.ezlab.org/datasets/eukaryota_odb9.tar.gz
 
 # Running RCorrector
 
-## Script to concatenate files together 
+##Concatenate files
+Script to concatenate the four files from each lane together called "catmyR1.sh". This way I'll only have one R1 file for each fish instead of four. 
 ```{bash}
 
+#!/bin/bash
+
 mkdir concat
-for file_start in burbot-Ma03*R1* burbot-Mb05*R1*
+for file_start in burbot-Ma01*R1* burbot-Ma02*R1* burbot-Ma03*R1* burbot-Ma04*R1* burbot-Ma07*R1* burbot-Ma10*R1* burbot-Ma11*R1* burbot-Ma12*R1* burbot-Mb01*R1* burbot-Mb02*R1* burbot-Mb03*R1* burbot-Mb05*R1* burbot-Mb08*R1* burbot-Mb09*R1* burbot-Mb10*R1* burbot-Mb12*R1* burbot-Mc01*R1* burbot-Mc02*R1* burbot-Mc03*R1* burbot-Mc04*R1* burbot-Mc08*R1* burbot-Mc10*R1* burbot-Mc11*R1* burbot-Mc12*R1* burbot-Md01*R1* burbot-Md02*R1* burbot-Md04*R1* burbot-Md05*R1* burbot-Md09*R1* burbot-Md10*R1* burbot-Md11*R1* burbot-Md12*R1* burbot-RV01*R1* burbot-RV02*R1* burbot-RV04*R1* burbot-RV06*R1* burbot-RV08*R1* burbot-RV09*R1* burbot-RV11*R1* burbot-RV12*R1*
 do  
   #List the file names we want to concatenate 
   allR1=`ls ./*/Unaligned*/*/${file_start}.fastq.gz`
@@ -686,8 +705,48 @@ do
   #Check the new file basename
   echo ${outfile}_R1 
   #Concatenate and write to a new file
-  cat $allR1 > ./concat/${outfile}.fastq.gz
+  cat $allR1 > ./concat/${outfile}_R1.fastq.gz
 done
+
+```
+
+Running catmyR1.sh:
+```{bash}
+
+chmod u+x catmyR1.sh
+
+nohup ./catmyR1.sh >catmyR1Log.txt &
+
+```
+
+
+And again for R2 called "catmyR2.sh"
+```{bash}
+
+#!/bin/bash
+
+for file_start in burbot-Ma01*R2* burbot-Ma02*R2* burbot-Ma03*R2* burbot-Ma04*R2* burbot-Ma07*R2* burbot-Ma10*R2* burbot-Ma11*R2* burbot-Ma12*R2* burbot-Mb01*R2* burbot-Mb02*R2* burbot-Mb03*R2* burbot-Mb05*R2* burbot-Mb08*R2* burbot-Mb09*R2* burbot-Mb10*R2* burbot-Mb12*R2* burbot-Mc01*R2* burbot-Mc02*R2* burbot-Mc03*R2* burbot-Mc04*R2* burbot-Mc08*R2* burbot-Mc10*R2* burbot-Mc11*R2* burbot-Mc12*R2* burbot-Md01*R2* burbot-Md02*R2* burbot-Md04*R2* burbot-Md05*R2* burbot-Md09*R2* burbot-Md10*R2* burbot-Md11*R2* burbot-Md12*R2* burbot-RV01*R2* burbot-RV02*R2* burbot-RV04*R2* burbot-RV06*R2* burbot-RV08*R2* burbot-RV09*R2* burbot-RV11*R2* burbot-RV12*R2*
+do  
+  #List the file names we want to concatenate 
+  allR2=`ls ./*/Unaligned*/*/${file_start}.fastq.gz`
+  #Make the basename of the new concatenated file
+  anR2=`ls ./xzsdtmj958/Unaligned*/*/${file_start}.fastq.gz`
+  outfile=$(basename $anR2 _L002_R2_001.fastq.gz)
+  #Check the new file basename
+  echo ${outfile}_R2 
+  #Concatenate and write to a new file
+  cat $allR2 > ./concat/${outfile}_R2.fastq.gz
+done
+
+```
+
+
+Running catmyR2.sh:
+```{bash}
+
+chmod u+x catmyR2.sh
+
+nohup ./catmyR2.sh >catmyR2Log.txt &
 
 ```
 
@@ -724,20 +783,10 @@ Note that on a mac, the command to check md5 is just md5. In linux, it's md5sum.
 
 diff <(md5sum *.fastq.gz | sort -u) <(cat md5.txt | sort -u)
 
-```
-
-
-
-```{bash}
-echo "80ab57f0c1ea7d90dc1d862c47c30e8d  burbot-Ma01-C_S203_L004_R1_001.fastq.gz" | cut -f1 -d" "   
-echo "MD5 (burbot-Ma01-C_S203_L004_R1_001.fastq.gz) = 80ab57f0c1ea7d90dc1d862c47c30e8d" | cut -f2 -d"=" | cut -f2 -d" "
-
-slims= grep "^.+\.\.${fish1}" md5.txt
-
-slims= grep '^.*burbot-Ma01-C_S203_L004_R1_001.fastq.gz' md5.txt
-grep '^.*\.\.'burbot-Ma01-C_S203_L004_R1_001.fastq.gz md5.txt
+# All files matched, meaning that data transferred without corruption! 
 
 ```
+
 
 Link to github
 
