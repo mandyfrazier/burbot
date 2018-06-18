@@ -308,11 +308,15 @@ Script "runRcorrector.sh" to run Rcorrector on the concatenated fastq files.
 for infile in *R1.fastq.gz
 do
     base=$(basename $infile R1.fastq.gz)
-    perl ~/rcorrector/run_rcorrector.pl -1 ${base}R1.fastq.gz -2 ${base}R2.fastq.gz -k 32 -t 6 -od ../Rcorrected -verbose
+    echo "Running ${base}"
+    perl ~/rcorrector/run_rcorrector.pl -1 ${base}R1.fastq.gz -2 ${base}R2.fastq.gz -k 32 -t 46 -od ../Rcorrected
+    echo "Done with ${base}... moving on"
 done
 
 #For rcorrector, specify a kmer length of 32 (this is the max kmer length). This makes sense for your data because you have long reads. Default is 23. 
-# t=30 is 30 threads to parallelize to decrease running time. Erin's took 20 hours to run 
+# t=46 is 46 threads to parallelize to decrease running time. 
+
+#Erin's took 20 hours to run. Mine took ~40 hours to run on m5.12xlarge instance
 
 ```
 
@@ -329,6 +333,13 @@ chmod u+x runRcorrector.sh
 
 
 nohup ./runRcorrector.sh >runRcorrectorLog.sh &
+
+#Started on Thursday ~2:30 pm. 
+#Got stuck.... 
+
+#Took out the -verbose flag, and tried again: 
+
+nohup ./runRcorrector.sh >runRcorrectorLog2.txt &
 
 ```
 
@@ -784,6 +795,71 @@ Note that on a mac, the command to check md5 is just md5. In linux, it's md5sum.
 diff <(md5sum *.fastq.gz | sort -u) <(cat md5.txt | sort -u)
 
 # All files matched, meaning that data transferred without corruption! 
+
+```
+
+#Run Rcorrector (for realz)
+
+##Script 
+```{bash}
+
+#!/bin/bash 
+
+
+
+for infile in *R1.fastq.gz
+do
+    base=$(basename $infile R1.fastq.gz)
+    echo "Running ${base}"
+    perl ~/rcorrector/run_rcorrector.pl -1 ${base}R1.fastq.gz -2 ${base}R2.fastq.gz -k 32 -t 46 -od ../Rcorrected
+    echo "Done with ${base}... moving on"
+done
+
+#For rcorrector, specify a kmer length of 32 (this is the max kmer length). This makes sense for your data because you have long reads. Default is 23. 
+# t=46 is 46 threads to parallelize to decrease running time. 
+
+#Erin's took 20 hours to run. Mine took ~40 hours to run on m5.12xlarge instance
+
+```
+
+##Running script
+```{bash}
+
+```
+
+
+
+
+#Run Trinity (for realz) 
+
+##Script 
+```{r Trinity Script, eval=FALSE}
+
+#!/bin/bash
+
+echo $(date)
+
+cd /home/ubuntu/data/2_Rcorrector/Rcorrected2/
+
+R1="burbot-Ma01-C_S179_R1.cor.fq.gz,burbot-Ma02-C_S189_R1.cor.fq.gz,burbot-Ma03-C_S199_R1.cor.fq.gz,burbot-Ma04-C_S209_R1.cor.fq.gz,burbot-Ma07-P_S180_R1.cor.fq.gz,burbot-Ma10-P_S190_R1.cor.fq.gz,burbot-Ma11-P_S200_R1.cor.fq.gz,burbot-Ma12-P_S210_R1.cor.fq.gz,burbot-Mb01-C_S181_R1.cor.fq.gz,burbot-Mb02-C_S191_R1.cor.fq.gz,burbot-Mb03-C_S201_R1.cor.fq.gz,burbot-Mb05-C_S211_R1.cor.fq.gz,burbot-Mb08-P_S182_R1.cor.fq.gz,burbot-Mb09-P_S192_R1.cor.fq.gz,burbot-Mb10-P_S202_R1.cor.fq.gz,burbot-Mb12-P_S212_R1.cor.fq.gz,burbot-Mc01-C_S183_R1.cor.fq.gz,burbot-Mc02-C_S193_R1.cor.fq.gz,burbot-Mc03-C_S203_R1.cor.fq.gz,burbot-Mc04-C_S213_R1.cor.fq.gz,burbot-Mc08-P_S184_R1.cor.fq.gz,burbot-Mc10-P_S194_R1.cor.fq.gz,burbot-Mc11-P_S204_R1.cor.fq.gz,burbot-Mc12-P_S214_R1.cor.fq.gz,burbot-Md01-C_S185_R1.cor.fq.gz,burbot-Md02-C_S195_R1.cor.fq.gz,burbot-Md04-C_S205_R1.cor.fq.gz,burbot-Md05-C_S215_R1.cor.fq.gz,burbot-Md09-P_S186_R1.cor.fq.gz,burbot-Md10-P_S196_R1.cor.fq.gz,burbot-Md11-P_S206_R1.cor.fq.gz,burbot-Md12-P_S216_R1.cor.fq.gz,burbot-RV01-C_S187_R1.cor.fq.gz,burbot-RV02-C_S197_R1.cor.fq.gz,burbot-RV04-C_S207_R1.cor.fq.gz,burbot-RV06-C_S217_R1.cor.fq.gz,burbot-RV08-P_S188_R1.cor.fq.gz,burbot-RV09-P_S198_R1.cor.fq.gz,burbot-RV11-P_S208_R1.cor.fq.gz,burbot-RV12-P_S218_R1.cor.fq.gz"
+
+R2="burbot-Ma01-C_S179_R2.cor.fq.gz,burbot-Ma02-C_S189_R2.cor.fq.gz,burbot-Ma03-C_S199_R2.cor.fq.gz,burbot-Ma04-C_S209_R2.cor.fq.gz,burbot-Ma07-P_S180_R2.cor.fq.gz,burbot-Ma10-P_S190_R2.cor.fq.gz,burbot-Ma11-P_S200_R2.cor.fq.gz,burbot-Ma12-P_S210_R2.cor.fq.gz,burbot-Mb01-C_S181_R2.cor.fq.gz,burbot-Mb02-C_S191_R2.cor.fq.gz,burbot-Mb03-C_S201_R2.cor.fq.gz,burbot-Mb05-C_S211_R2.cor.fq.gz,burbot-Mb08-P_S182_R2.cor.fq.gz,burbot-Mb09-P_S192_R2.cor.fq.gz,burbot-Mb10-P_S202_R2.cor.fq.gz,burbot-Mb12-P_S212_R2.cor.fq.gz,burbot-Mc01-C_S183_R2.cor.fq.gz,burbot-Mc02-C_S193_R2.cor.fq.gz,burbot-Mc03-C_S203_R2.cor.fq.gz,burbot-Mc04-C_S213_R2.cor.fq.gz,burbot-Mc08-P_S184_R2.cor.fq.gz,burbot-Mc10-P_S194_R2.cor.fq.gz,burbot-Mc11-P_S204_R2.cor.fq.gz,burbot-Mc12-P_S214_R2.cor.fq.gz,burbot-Md01-C_S185_R2.cor.fq.gz,burbot-Md02-C_S195_R2.cor.fq.gz,burbot-Md04-C_S205_R2.cor.fq.gz,burbot-Md05-C_S215_R2.cor.fq.gz,burbot-Md09-P_S186_R2.cor.fq.gz,burbot-Md10-P_S196_R2.cor.fq.gz,burbot-Md11-P_S206_R2.cor.fq.gz,burbot-Md12-P_S216_R2.cor.fq.gz,burbot-RV01-C_S187_R2.cor.fq.gz,burbot-RV02-C_S197_R2.cor.fq.gz,burbot-RV04-C_S207_R2.cor.fq.gz,burbot-RV06-C_S217_R2.cor.fq.gz,burbot-RV08-P_S188_R2.cor.fq.gz,burbot-RV09-P_S198_R2.cor.fq.gz,burbot-RV11-P_S208_R2.cor.fq.gz,burbot-RV12-P_S218_R2.cor.fq.gz"
+
+echo $("Running trinity...")
+
+/home/ubuntu/Trinityrnaseq-v2.6.6/Trinity --SS_lib_type RF --seqType fq --max_memory 180G --CPU 46 --output Rcorr_trinity_test --trimmomatic --left $R1 --right $R2
+
+echo $(date)
+echo "Done with Trinity! :)"
+
+```
+
+##Running script
+```{bash}
+
+chmod u+x run_Trinity.sh
+
+nohup ./run_Trinity.sh > log_trinity_test.txt 2> log_trinity_error_test.txt &
 
 ```
 
