@@ -825,6 +825,8 @@ done
 ##Running script
 ```{bash}
 
+
+
 ```
 
 
@@ -859,15 +861,145 @@ echo "Done with Trinity! :)"
 
 chmod u+x run_Trinity.sh
 
-nohup ./run_Trinity.sh > log_trinity_test.txt 2> log_trinity_error_test.txt &
+nohup ./run_Trinity.sh > log_trinity.txt 2> log_trinity_error.txt &
 
 ```
 
 
-Link to github
+## Trinity Stats
+```{bash}
 
-Publication
 
-Copyright 
+# Normalization: 
+
+CMD: /home/ubuntu/Trinityrnaseq-v2.6.6/util/..//util/support_scripts//nbkc_normalize.pl --stats_file pairs.K25.stats --max_cov 50  --min_cov 1 --max_pct_stdev 10000 > pairs.K25.stats.C50.pctSD10000.accs
+40962711 / 1204122769 = 3.40% reads selected during normalization.
+0 / 1204122769 = 0.00% reads discarded as likely aberrant based on coverage profiles.
+0 / 1204122769 = 0.00% reads missing kmer coverage (N chars included?).
+0 / 1204122769 = 0.00% reads discarded as below minimum coverage threshold=1
+
+
+```
+
+
+#Increase AWS ROOT Volume Size
+I ran out of space on the root volume when trying to run Trinity (I think this is because Java and the programs are installed on the root, so any temporary files might be there instead of on the detachable volume where I have my data?) 
+1. Go to AWS online console and select the instance. In the description tab you can see the root volume. Check what the volume ID is. 
+2. Go to the Volumes and select the same volume ID for the root volume. 
+3. Right click and select "Modify Volume"
+4. Type in the desired memory. 
+5. Go to Instances and reboot the instance. 
+6. Log back into the instance in the Terminal and type "lsblk". The root volume should now have the space you just added. 
+
+#Increase AWS EBS volume size
+After running out of space on the root volume I also ran out of space on the EBS volume for Trinity. 
+1. Go to the "Volumes" tab and select the volume you want to expand and click "Modify Volume". Enter the size you want (I increased from 1TB to 2TB). 
+2. In the terminal: 
+```{bash}
+lsblk #List volumes
+du -h #List data usage, human-readable. This doesn't show what's available, only what's used. 
+df -h #List free data space. Note that this can be different than what you see using lsblk! This is because the file system needs to be extended before you can use the available space. 
+
+sudo resize2fs /dev/nvme1n1
+
+```
+
+Note that increasing to 2TB STILL wasn't enough space. The script got through trimmomatic, but in normalization it crashed due to lack of space. 
+I doubled the volume to 4TB. 
+Tried rerunning without deleting anything in hopes that it would pick up where it left off, but it couldn't figure it out. So I deleted the in_silico_normalization file (but NOT the trimmomatic files) so it could pick up there. 
+
+Trinity only took ~1.5 days to run!
+
+#Trinity Stats
+```{bash}
+cd ~/Trinityrnaseq-v2.6.6/util
+./TrinityStats.pl ~/data/2_Rcorrector/Rcorrected2/Rcorr_trinity/Trinity.fasta
+```
+Output: 
+
+################################
+ Counts of transcripts, etc.
+################################
+Total trinity 'genes':	435317
+Total trinity transcripts:	793202
+Percent GC: 47.58
+
+########################################
+Stats based on ALL transcript contigs:
+########################################
+
+	Contig N10: 5625
+	Contig N20: 4100
+	Contig N30: 3185
+	Contig N40: 2507
+	Contig N50: 1959
+
+	Median contig length: 592
+	Average contig: 1097.34
+	Total assembled bases: 870415829
+
+
+#####################################################
+ Stats based on ONLY LONGEST ISOFORM per 'GENE':
+#####################################################
+
+	Contig N10: 4754
+	Contig N20: 3220
+	Contig N30: 2267
+	Contig N40: 1611
+	Contig N50: 1159
+
+	Median contig length: 434
+	Average contig: 765.83
+	Total assembled bases: 333377568
+
+#Assessing quality of transcriptome assembly 
+```{r}
+
+# To install busco and dependencies: 
+conda install busco 
+
+#To download fish dataset: 
+wget https://busco.ezlab.org/datasets/actinopterygii_odb9.tar.gz
+gunzip actinopterygii_odb9.tar.gz
+tar -xvf actinopterygii_odb9.tar
+
+#To run BUSCO: 
+
+run_BUSCO.py -i Trinity.fasta -o burbot_busco_fish \
+-l actinopterygii_odb9 -m transcriptome --cpu 4
+
+nohup ./run_BUSCO.sh > log_BUSCO.txt 2> log_BUSCO_error.txt &
+
+```
+
+
+
+
+
+
+
+#Reducing Volume Size
+You can't make your volume smaller, so you have to make a new smaller volume, mount both volumes to the AWS instance in different directories, then copy the data to the smaller volume and then delete the origianl volume. 
+
+#Connecting to RStudio through your AWS instance:
+
+```{r, eval=FALSE}
+
+sudo passwd $USER #Set your RStudio password. Do this only once. My password is UnderTheice! 
+
+conda install rstudio #To install rstudio (must have conda installed)
+
+echo My username is $user #To get your username 
+
+echo http://$(hostname):8787/ #To get your RStudio server interface web address
+
+
+  Must open 8787 port on your AWS instance. 
+```
+
+Then open a web brower and copy in what your web address is. This will connect you to RStudio, where you can then login. 
+
+
 
 
