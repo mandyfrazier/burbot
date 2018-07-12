@@ -1,0 +1,540 @@
+---
+title: "LDHStatsRespun"
+author: "Amanda"
+date: "6/25/2018"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Data exploration and statistics on LDH Data for Burbot, Lota lota, 2017 experiment. Note that the data used for this is on the respun homogenate (so use this one!) 
+
+#Setup 
+```{r Load Packages}
+library(readr)
+library(car)
+library(ggplot2)
+library(dplyr)
+library(lsmeans)
+library(multcompView)
+```
+
+```{r Set ggplot theme}
+theme_bw()
+```
+
+```{r Load Data}
+library(readr)
+LDHdata <- read_delim("~/Documents/Davis/BurbotExperiment/EnzymeAssays/AllRealSamplesRESPUN/2018-may-burbot-respun-LDH-summary.csv", 
+    ",", escape_double = FALSE, trim_ws = TRUE)
+View(LDHdata)
+LDHdata$FeedStrat <- as.factor(LDHdata$FeedStrat)
+LDHdata$Family <- as.factor(LDHdata$Family)
+
+str(LDHdata)
+summary(LDHdata)
+```
+
+# Calculate Q10 
+```{r}
+## T1=14°C T2=24°C 
+LDHdata <- LDHdata %>%
+  mutate(Q10=((`Warm LDH activity`/`Cold LDH activity`)^(10/(24-14)))) %>% 
+  rename(LDH.cold=`Cold LDH activity`, LDH.warm=`Warm LDH activity`, 
+                       feedstrat=`Feeding Strategy`)
+
+```
+
+```{r}
+# I want to scale enzyme activtiy based on mass, because I currently can't distinguish if the differences in enzyme activity are only due to mass or if they're due to feeding strategy. By scaling to mass, I'll have enzyme activity * mg protein * mg mass. It makes sense to scale to mass in addition to mg protein, because there could be differential enzyme activity per mg protein based on body size. 
+
+LDHdata <- LDHdata %>%
+  mutate(ColdLDHActivityPerGMass=(ColdLDHActivity/(Mass)))
+
+LDHdata <- LDHdata %>%
+  mutate(WarmLDHActivityPerGMass=(WarmLDHActivity/(Mass)))
+
+View(LDHdata)
+
+```
+
+
+
+# The Model 
+It's important to decide which model to test before running stats. This model should be based on the biological understanding of the system. To choose a model: 
+1) Include everything that you think is biologically important. 
+2) If you do test multiple models and they are not significantly different, choose the simpler model. 3) Choose the more conservative model. 
+```{r}
+# We want to write a model that includes mass (allometric scaling) so we are going to use Kleiber's Law: Activity = aM^b 
+
+
+sma(LDHdata$ColdLDHActivity~LDHdata$Mass)
+sma(LDHdata$ColdLDHActivity~LDHdata$Mass+LDHdata$FeedStrat)
+plot(sma(LDHdata$ColdLDHActivity~LDHdata$Mass+LDHdata$FeedStrat))
+
+ft <- sma(LDHdata$ColdLDHActivity~LDHdata$Mass, log="xy")
+xax <- defineAxis(major.ticks=0.5,1,2)
+yax <- defineAxis(major.ticks=0.5,1,2)
+plot(ft)
+plot(ft, which="residual")
+plot(ft, which="qq")
+
+nls1 <- nls(ColdLDHActivity ~ a*Mass*exp(b), start=list(a=0.0045, b=3.257), data=LDHdata)
+ggplot(data=LDHdata, aes(x=Mass, y=ColdLDHActivity)) + geom_point(aes(shape=Family, color=FeedStrat)) + geom_smooth()
+summary(nls1)
+plot(nls1)
+plot(LDHdata$ColdLDHActivity, LDHdata$Mass)
+lines(LDHdata&ColdLDHActivity, predict(nls1), lty=2, col="red", lwd=3)
+
+ggplot(data=LDHdata, aes(x=Mass, y=ColdLDHActivity)) + geom_point(aes(shape=Family, color=FeedStrat)) + facet_wrap( ~FeedStrat) + geom_smooth() 
+
+
+ma(ColdLDHActivity ~ Mass, log='xy', data=LDHdata)
+ma.test <- ma(ColdLDHActivity ~ Mass, log='xy', slope.test=1, data=LDHdata)
+summary(ma.test)
+plot(ma.test, type="residual")
+method=c("SMA"), type=c("elevation"), alpha=0.05, slope.test=NA, elev.test=NA, multcomp=FALSE, multcompmethod=c("default", "adjusted"), robust=FALSE, V=matrix(0,2,2), n_min=3, quiet=FALSE) 
+
+```
+
+# Data Exploration 
+It's incredibly important to check the data before running any stats to avoid making statistical errors! 
+```{r Brief Weirdness Check}
+str(LDHdata) #check each column's data type
+# All good: 
+#Sample is an integer
+#FeedSTrat is a factor w/ two levels
+#Family is a factor w/ five levels
+#WarmLDHActivity and ColdLDHActivity are numerical
+summary(LDHdata) #easy way to check that data is entered correctly and that distributions make sense. 
+#All good: 
+#20 entries for both feeding strategies, 8 entries for all families.
+#Max, min, median, and mean all seem reasonable for the two temps. 
+head(LDHdata)
+
+# Check spread of LDH values without looking at treatment. This looks good for both temps.
+p=ggplot(data=LDHdata, aes(x=Sample, y=ColdLDHActivity))
+p+geom_point()
+
+p=ggplot(data=LDHdata, aes(x=Sample, y=WarmLDHActivity))
+p+geom_point()
+```
+
+## 1. Outliers? 
+```{r BoxPlot}
+pd <-position_dodge(0.8)
+p=ggplot(data=LDHdata, aes(x=FeedStrat, y=ColdLDHActivity))
+p+geom_boxplot(position=pd) + 
+  labs(x = "Feeding Strategy", y="LDH Activity (U/mg protein)") 
+
+#It doesn't look like there are any outliers. How do I show a BoxPlot for all the data together without separating for feeding strategy? 
+```
+
+```{r Cleveland dotplot}
+dotchart(LDHdata$ColdLDHActivity, main = "Cleveland Dotplot", xlab= "Cold LDH Activity", ylab="Order of Samples")
+
+dotchart(LDHdata$WarmLDHActivity, main = "Cleveland Dotplot", xlab= "Warm LDH Activity", ylab="Order of Samples")
+
+#It really looks like there is a nice spread of values. There isn't any one point that's WAY out on the right or left side. 
+```
+
+## 2. Homogeneity of variance?
+To test if the LDH Activity varies based on feeding strategy and family (using ANOVA), I have to assume that the variation within families and feeding strategies is similar. Small differences in variation are OK, but if there are large differences I'd have to transform the data. 
+```{r }
+
+residuals 
+
+plot residuals vs. fitted values 
+
+op <- par(mfrow = c(2,2))
+plot(LDHmod, which=1)
+residuals <- resid(LDHmod)
+hist(residuals, xlab="Residuals", main="")
+plot(LDHdataQ10$feedstrat, residuals, xlab = "Feeding Strategy", ylab = "Residuals")
+plot(LDHdataQ10$Family, residuals, xlab = "Family", ylab="Residuals")
+par(op) 
+
+
+```
+
+#LDH Activity at 14°C
+```{r}
+
+#Boxplot of LDH Activity at 14°C.
+pd <-position_dodge(0.8)
+p=ggplot(data=LDHdata, aes(x=Family, y=ColdLDHActivity))
+p+geom_boxplot(aes(fill=FeedStrat), position=pd) + scale_fill_manual(values=c("#56B4E9", "#00BF7D")) + coord_cartesian(ylim=c(0,3)) +
+  labs(x = "Family", y="LDH Activity (U / mg protein)") + geom_vline(xintercept=c(1.5, 2.5, 3.5, 4.5), linetype="solid", color="darkgrey") +
+  theme_bw() +
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    legend.title = element_blank(), 
+    axis.text = element_text(size=12, color="black"), 
+    title = element_text(size=14),
+    legend.text = element_text(size=12), 
+    legend.box.background = element_rect(color="black"), 
+    legend.position = c(0.9, 0.91))
+```
+
+```{r}
+#Boxplot of LDH Activity at 14°C, scaled for mass. 
+pd <-position_dodge(0.8)
+p=ggplot(data=LDHdata, aes(x=Family, y=ColdLDHActivityPerGMass))
+p+geom_boxplot(aes(fill=FeedStrat), position=pd) + 
+  labs(x = "Family", y="LDH Activity (U/mg protein/g mass)") + geom_vline(xintercept=c(1.5, 2.5, 3.5, 4.5), linetype="solid", color="darkgrey") +
+  theme_bw() +
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    legend.title = element_blank(), 
+    axis.text = element_text(size=12, color="black"), 
+    title = element_text(size=14),
+    legend.text = element_text(size=12), 
+    legend.box.background = element_rect(color="black"), 
+    legend.position = c(0.9, 0.91))
+
+```
+
+```{r}
+#Boxplot of LDH Activity at 14°C, scaled for mass but NOT mg protein
+pd <-position_dodge(0.8)
+p=ggplot(data=LDHdata, aes(x=Family, y=ColdLDHActivityByMASS))
+p+geom_boxplot(aes(fill=FeedStrat), position=pd) + 
+  labs(x = "Family", y="LDH Activity (U/g whole body mass)") + geom_vline(xintercept=c(1.5, 2.5, 3.5, 4.5), linetype="solid", color="darkgrey") +
+  theme_bw() +
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    legend.title = element_blank(), 
+    axis.text = element_text(size=12, color="black"), 
+    title = element_text(size=14),
+    legend.text = element_text(size=12), 
+    legend.box.background = element_rect(color="black"), 
+    legend.position = c(0.9, 0.91))
+
+```
+
+
+
+
+
+
+```{r}
+#Boxplot of LDH Activity at 14°C, scaled for mass. 
+pd <-position_dodge(0.8)
+p=ggplot(data=LDHdata, aes(x=FeedStrat, y=ColdLDHActivityPerGMass))
+p+geom_boxplot(aes(fill=FeedStrat), position=pd) + 
+  labs(x = "Family", y="LDH Activity (U/mg protein/g mass)") + geom_vline(xintercept=c(1.5, 2.5, 3.5, 4.5), linetype="solid", color="darkgrey") +
+  theme_bw() +
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    legend.title = element_blank(), 
+    axis.text = element_text(size=12, color="black"), 
+    title = element_text(size=14),
+    legend.text = element_text(size=12), 
+    legend.box.background = element_rect(color="black"), 
+    legend.position = c(0.9, 0.91))
+
+
+```
+
+
+
+```{r}
+#Boxplot of average LDH Activity at 14°C. 
+pd <-position_dodge(0.8)
+p=ggplot(data=LDHdata, aes(x=FeedStrat, y=ColdLDHActivity))
+p+geom_boxplot(aes(fill=FeedStrat), position=pd) + coord_cartesian(ylim=c(0,3)) +
+  labs(x = "Feeding Strategy", y="LDH Activity (U/mg protein) at 14°C") + geom_vline(xintercept=c(1.5, 3.5, 4.5), linetype="solid", color="darkgrey") + scale_fill_manual(values=c("#56B4E9", "#00BF7D")) + 
+  theme_bw() +
+  theme(
+  panel.grid.major = element_blank(), 
+  panel.grid.minor = element_blank(),
+  legend.title = element_blank(), 
+  axis.text = element_text(size=12, color="black"), 
+  title = element_text(size=14)
+   # legend.text = element_text(size=12), 
+  #  legend.box.background = element_rect(color="black"), 
+   # legend.position = c(0.9, 0.91)
+   )
+
+#calculate means in dplyr
+
+LDH.summary.feed.fam <- LDHdata %>%
+group_by(FeedStrat, Family) %>%
+mutate(n=length(ColdLDHActivity), LDH.mean.feed.fam=mean(ColdLDHActivity), sd.mean.feed.fam=sd(ColdLDHActivity), se.mean.feed.fam=sd.mean.feed.fam/sqrt(n))
+
+
+pd <- position_dodge(0.8)
+p=ggplot(data=LDHdata, aes(x=FeedStrat, y=ColdLDHActivity))
+p+geom_boxplot(aes(fill=FeedStrat), position=pd, outlier.alpha=0) +
+  coord_cartesian(ylim=c(0,3)) +
+  labs(x="Feeding Strategy", y="LDH Activity (U/mg protein)") +
+  geom_vline(xintercept=c(1.5, 3.5, 4.5), linetype="solid", color="darkgrey") +
+  scale_fill_manual(values=c("#56B4E9", "#00BF7D")) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        legend.title=element_blank(), 
+        axis.text = element_text(size=12, color="black"), 
+        title = element_text(size=14), 
+        legend.text = element_text(size=12), 
+        legend.box.background = element_rect(color="black"), 
+       # legend.position = c(0.9, 0.91)) 
+  ) +
+ geom_point(data=LDH.summary.feed.fam, 
+             aes(x=FeedStrat, y=LDH.mean.feed.fam,
+                 group = interaction(FeedStrat, Family), shape=Family), 
+             position = position_dodge(width = 0.8), size=3) +
+  geom_errorbar(data=LDH.summary.feed.fam, aes(ymax = LDH.mean.feed.fam+se.mean.feed.fam, 
+                                              ymin = LDH.mean.feed.fam-se.mean.feed.fam, 
+                                              group=interaction(FeedStrat, Family)), 
+                width=0, position = position_dodge(width = 0.8), alpha=0.5)
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+LDHmod = lm(ColdLDHActivity ~ FeedStrat*Family, data=LDHdata)
+plot(LDHmod)
+summary(LDHmod)
+Anova(LDHmod)
+anova(LDHmod)
+
+
+
+```
+
+```{r}
+
+ggplot(data=LDHdata, aes(x=Mass, y=ColdLDHActivityPerGMass)) + geom_point(aes(shape=Family, color=FeedStrat)) + geom_smooth()
+
+```
+
+```{r}
+
+LDHdata <- LDHdata %>%
+  mutate(logColdLDHActivity=(log(ColdLDHActivity, base=exp(10))))
+
+View(LDHdata)
+
+ggplot(data=LDHdata, aes(x=Mass, y=logColdLDHActivity)) + geom_point(aes(shape=Family, color=FeedStrat)) + geom_smooth()
+
+
+```
+
+```{r}
+
+##Linear model
+LDHmod = lm(ColdLDHActivity ~ FeedStrat*Family, data=LDHdata)
+plot(LDHmod) #Residuals look fine. Data is normally distributed. 
+summary(LDHmod)
+Anova(LDHmod) #Both feeding strategy and family explain variation in the data! And their interaction borderline explains variation in the data.
+anova(LDHmod)
+
+LDHmod = lm(ColdLDHActivity ~ FeedStrat, data=LDHdata)
+LDHmod = lm(ColdLDHActivity ~ Family, data=LDHdata)
+LDHmod = lm(ColdLDHActivity ~ Mass, data=LDHdata) 
+LDHmod = lm(ColdLDHActivity ~ FeedStrat*Mass*Family, data=LDHdata) 
+plot(LDHmod)
+summary(LDHmod)
+
+##Test variance within feeding strategies and families 
+op <- par(mfrow = c(2,2))
+plot(LDHmod, which=1)
+residuals <- resid(LDHmod)
+hist(residuals, xlab="Residuals", main="")
+plot(LDHdataQ10$feedstrat, residuals, xlab = "Feeding Strategy", ylab = "Residuals")
+plot(LDHdataQ10$Family, residuals, xlab = "Family", ylab="Residuals")
+par(op) 
+
+
+LDHmod <- 
+TukeyTest = lsmeans(LDHmod, tukey ~ feedstrat:Family)
+cld(TukeyTest)
+
+TukeyTest = lsmeans(LDHmod, tukey ~ feedstrat)
+cld(TukeyTest)
+
+TukeyTest = lsmeans(LDHmod, tukey ~ Family)
+cld(TukeyTest)
+```
+
+```{r}
+library(reshape2)
+
+df <- data.frame (LDHdata$Mass, ColdLDHActivity, ColdCSActivity)
+ggplot(df, aes(x=Mass, y=ColdLDHActivity, group= FeedStrat, color=FeedStrat)) + 
+  geom_point(aes(y=ColdLDHActivity, col=))
+  geom_smooth(method='lm', se=F) + geom_point() + scale_color_manual(values=c("#56B4E9", "#00BF7D")) +
+  labs(x = "Mass (g)", y = "LDH Activity (U / mg protein)", color= "Feeding Strategy") +
+  theme_bw() +
+  theme(
+  panel.grid.major = element_blank(), 
+  panel.grid.minor = element_blank(), 
+  axis.text = element_text(size=14), 
+  title = element_text(size=14),
+  strip.text.x = element_text(size=14), 
+  legend.text = element_text(size=12), 
+  legend.position = c(0.8, 0.15), 
+  legend.box.background = element_rect(color="black"))
+
++ ggplot(CSdata, aes(x=Mass, y=ColdCSActivity, group=FeedStrat, color=FeedStrat)) + geom_smooth(method='lm', se=F) + geom_point() + scale_color_manual(values=c("#56B4E9", "#00BF7D"))
+
+
+```
+
+
+```{r}
+##Linear model
+LDHmod = lm(ColdLDHActivity ~ FeedStrat*Family, data=LDHdata)
+plot(LDHmod) #Residuals look fine. Data is normally distributed. 
+summary(LDHmod)
+Anova(LDHmod) #Both feeding strategy and family explain variation in the data! And their interaction borderline explains variation in the data.
+anova(LDHmod)
+ggplot(LDHmod)
+
+```
+
+
+```{r}
+LDHtoCSRatio <- LDHdata$ColdLDHActivity / CSdata$ColdCSActivity
+
+View(LDHtoCSRatio)
+
+LDHdata <- LDHdata %>%
+  mutate(Ratio=LDHtoCSRatio)
+
+LDHtoCSmod <- lm(LDHtoCSRatio ~ FeedStrat*Family, data=LDHdata)
+summary(LDHtoCSmod)
+anova(LDHtoCSmod)
+LDHtoCSmod2 <- lm(LDHtoCSRatio ~ FeedStrat + Family, data=LDHdata)
+summary(LDHtoCSmod2)
+logLDHtoCSmod <- lm(log(LDHtoCSRatio) ~ FeedStrat*Family, data=LDHdata)
+summary(logLDHtoCSmod)
+
+View(LDHdata)
+
+pd <-position_dodge(0.8)
+p=ggplot(data=LDHdata, aes(x=Family, y=Ratio))
+p+geom_boxplot(aes(fill=FeedStrat), position=pd) + scale_fill_manual(values=c("#56B4E9", "#00BF7D")) +
+  labs(x = "Family", y="LDH/CS Ratio") + geom_vline(xintercept=c(1.5, 2.5, 3.5, 4.5), linetype="solid", color="darkgrey") +
+  theme_bw() +
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    legend.title = element_blank(), 
+    axis.text = element_text(size=12, color="black"), 
+    title = element_text(size=14),
+    legend.text = element_text(size=12), 
+    legend.box.background = element_rect(color="black"), 
+    legend.position = c(0.9, 0.91))
+
+Ratio.summary <- LDHdata %>%
+group_by(FeedStrat, Family) %>%
+mutate(n=length(Ratio), Ratio.mean.feed.fam=mean(Ratio), sd.mean.feed.fam=sd(Ratio), se.mean.feed.fam=sd.mean.feed.fam/sqrt(n))
+
+
+pd <- position_dodge(0.8)
+p=ggplot(data=LDHdata, aes(x=FeedStrat, y=Ratio))
+p+geom_boxplot(aes(fill=FeedStrat), position=pd, outlier.alpha=0) +
+  labs(x="Feeding Strategy", y="LDH:CS Ratio") +
+  geom_vline(xintercept=c(1.5, 3.5, 4.5), linetype="solid", color="darkgrey") +
+  scale_fill_manual(values=c("#56B4E9", "#00BF7D")) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        legend.title=element_blank(), 
+        axis.text = element_text(size=12, color="black"), 
+        title = element_text(size=14), 
+        legend.text = element_text(size=12), 
+        legend.box.background = element_rect(color="black"), 
+       # legend.position = c(0.9, 0.91)) 
+  ) +
+ geom_point(data=Ratio.summary, 
+             aes(x=FeedStrat, y=Ratio.mean.feed.fam,
+                 group = interaction(FeedStrat, Family), shape=Family), 
+             position = position_dodge(width = 0.8), size=3) +
+  geom_errorbar(data=Ratio.summary, aes(ymax = Ratio.mean.feed.fam+se.mean.feed.fam, 
+                                              ymin = Ratio.mean.feed.fam-se.mean.feed.fam, 
+                                              group=interaction(FeedStrat, Family)), 
+                width=0, position = position_dodge(width = 0.8), alpha=0.5)
+
+  
+  
+```
+
+```{r}
+#Boxplot of LDH Activity at 14°C, scaled for mass but NOT mg protein
+pd <-position_dodge(0.8)
+p=ggplot(data=LDHdata, aes(x=Family, y=ColdLDHActivityByMASS))
+p+geom_boxplot(aes(fill=FeedStrat), position=pd) + 
+  labs(x = "Family", y="LDH Activity (U/g whole body mass)") + geom_vline(xintercept=c(1.5, 2.5, 3.5, 4.5), linetype="solid", color="darkgrey") +
+  theme_bw() +
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    legend.title = element_blank(), 
+    axis.text = element_text(size=12, color="black"), 
+    title = element_text(size=14),
+    legend.text = element_text(size=12), 
+    legend.box.background = element_rect(color="black"), 
+    legend.position = c(0.9, 0.91))
+```
+
+```{r}
+
+ggplot(LDHdata, aes(x=Mass, y=ColdLDHActivity, group= FeedStrat, color=FeedStrat)) +
+  geom_smooth(method='lm', se=T) + geom_point() + coord_cartesian(ylim=c(0,3)) +
+  labs(x = "Mass (g)", y = "LDH Activity (U / mg protein)", color= "Feeding Strategy") + scale_color_manual(values=c("#56B4E9", "#00BF7D")) +
+  theme_bw() +
+  theme(
+  panel.grid.major = element_blank(), 
+  panel.grid.minor = element_blank(), 
+  axis.text = element_text(size=14), 
+  title = element_text(size=14),
+  strip.text.x = element_text(size=14), 
+  legend.text = element_text(size=12), 
+  legend.position = c(0.8, 0.15), 
+  legend.box.background = element_rect(color="black"))
+
+
+LDHmod <- lm(ColdLDHActivity ~ FeedStrat*Family, data=LDHdata)
+summary(LDHmod)
+
+LDHmod <- lm(ColdLDHActivity ~ FeedStrat*Mass, data=LDHdata)
+summary(LDHmod)
+
+ggplotRegression <- function (LDHmod) {
+  require(ggplot2)
+  ggplot(LDHmod$model, aes_string(x=names(LDH$model)[]))
+}
+
+```
+
+
+
