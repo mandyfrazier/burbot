@@ -1,0 +1,320 @@
+---
+title: "CSStatsRespunSeparateBackgrounds"
+author: "Amanda"
+date: "7/6/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+#knitr::opts_chunk$set(echo = FALSE)
+```
+
+Data exploration and statistics on LDH Data for Burbot, Lota lota, 2017 experiment. Note that the data used for this is on the respun homogenate (so use this one!) 
+
+#Setup 
+```{r Load Packages}
+library(readr)
+library(car)
+library(ggplot2)
+library(dplyr)
+library(lsmeans)
+library(multcompView)
+```
+
+```{r Set ggplot theme}
+theme_bw()
+```
+
+```{r Load Data}
+library(readr)
+CSdata <- read_delim("~/Documents/Davis/BurbotExperiment/EnzymeAssays/AllRealSamplesRESPUN/CS-SeparateBackgrounds/2018-july-burbot-respun-CS-summary.csv", 
+    ",", escape_double = FALSE, trim_ws = TRUE)
+View(CSdata)
+CSdata$FeedStrat <- as.factor(CSdata$FeedStrat)
+CSdata$Family <- as.factor(CSdata$Family)
+
+str(CSdata)
+summary(CSdata)
+```
+
+# Calculate Q10 
+```{r}
+## T1=14°C T2=24°C 
+CSdata <- CSdata %>%
+  mutate(Q10=((WarmCSActivity/ColdCSActivity)^(10/(24-14)))) 
+```
+
+#Check for spread of CS Data:
+```{r}
+p=ggplot(data=CSdata, aes(x=Sample, y=ColdCSActivity))
+p+geom_point()
+
+p=ggplot(data=CSdata, aes(x=Sample, y=WarmCSActivity))
+p+geom_point()
+
+#Most of the samples have really low CSActivity. 
+```
+
+## 1. Outliers? 
+```{r BoxPlot}
+pd <-position_dodge(0.8)
+p=ggplot(data=CSdata, aes(x=FeedStrat, y=ColdCSActivity))
+p+geom_boxplot(position=pd) + 
+  labs(x = "Feeding Strategy", y="CS Activity (U/mg protein)") 
+
+#How do I show a BoxPlot for all the data together without separating for feeding strategy? There are two outliers for planktivores, but there's no reason to remove them because they are within a reasonable range. 
+
+```
+
+```{r Cleveland dotplot}
+dotchart(CSdata$ColdCSActivity, main = "Cleveland Dotplot", xlab= "Cold CS Activity", ylab="Order of Samples")
+
+dotchart(CSdata$WarmCSActivity, main = "Cleveland Dotplot", xlab= "Warm CS Activity", ylab="Order of Samples")
+
+#There's definitely not an equal spread of values (there are a lot of very small values, and fewer high values) but it doesn't look like ONE is sticking way out right or way out left. 
+```
+
+```{r}
+ggplot(data=CSdata, aes(x=Mass, y=ColdCSActivity)) + geom_point(aes(shape=Family, color=FeedStrat)) + geom_smooth()
+summary(nls1)
+plot(nls1)
+```
+
+
+```{r}
+# I want to scale enzyme activtiy based on mass, because I currently can't distinguish if the differences in enzyme activity are only due to mass or if they're due to feeding strategy. By scaling to mass, I'll have enzyme activity * mg protein * mg mass. It makes sense to scale to mass in addition to mg protein, because there could be differential enzyme activity per mg protein based on body size. 
+
+CSdata <- CSdata %>%
+  mutate(ColdCSActivityPerGMass=(ColdCSActivity/(Mass)))
+
+CSdata <- CSdata %>%
+  mutate(WarmCSActivityPerGMass=(WarmCSActivity/(Mass)))
+
+```
+
+#Q10
+```{r}
+
+pairs(CSdata)
+
+pd <-position_dodge(0.8)
+p=ggplot(data=CSdata, aes(x=Family, y=Q10))
+p+geom_boxplot(aes(fill=FeedStrat), position=pd) + 
+  labs(x = "Family", y="Q10") + geom_vline(xintercept=c(1.5, 2.5, 3.5, 4.5), linetype="solid", color="darkgrey") +
+  theme_bw() +
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    legend.title = element_blank(), 
+    axis.text = element_text(size=12, color="black"), 
+    title = element_text(size=14),
+    legend.text = element_text(size=12), 
+    legend.box.background = element_rect(color="black"), 
+    legend.position = c(0.9, 0.91))
+```
+
+
+#CS Activity at 14°C
+```{r}
+
+#Boxplot of CS Activity at 14°C.
+pd <-position_dodge(0.8)
+p=ggplot(data=CSdata, aes(x=Family, y=ColdCSActivity))
+p+geom_boxplot(aes(fill=FeedStrat), position=pd) + scale_fill_manual(values=c("#56B4E9", "#00BF7D")) +
+  labs(x = "Family", y="CS Activity (U/mg protein)") + geom_vline(xintercept=c(1.5, 2.5, 3.5, 4.5), linetype="solid", color="darkgrey") +
+  theme_bw() +
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    legend.title = element_blank(), 
+    axis.text = element_text(size=12, color="black"), 
+    title = element_text(size=14),
+    legend.text = element_text(size=12), 
+    legend.box.background = element_rect(color="black"), 
+    legend.position = c(0.9, 0.91))
+```
+
+```{r}
+#Boxplot of CS Activity at 14°C, scaled for mass. 
+pd <-position_dodge(0.8)
+p=ggplot(data=CSdata, aes(x=Family, y=ColdCSActivityPerGMass))
+p+geom_boxplot(aes(fill=FeedStrat), position=pd) + 
+  labs(x = "Family", y="CS Activity (U/mg protein/g mass)") + geom_vline(xintercept=c(1.5, 2.5, 3.5, 4.5), linetype="solid", color="darkgrey") +
+  theme_bw() +
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    legend.title = element_blank(), 
+    axis.text = element_text(size=12, color="black"), 
+    title = element_text(size=14),
+    legend.text = element_text(size=12), 
+    legend.box.background = element_rect(color="black"), 
+    legend.position = c(0.9, 0.91))
+
+```
+
+```{r}
+#Boxplot of CS Activity at 14°C, scaled for mass. 
+pd <-position_dodge(0.8)
+p=ggplot(data=CSdata, aes(x=Family, y=ColdCSActivityByMASS))
+p+geom_boxplot(aes(fill=FeedStrat), position=pd) + 
+  labs(x = "Family", y="CS Activity (U/g whole body mass)") + geom_vline(xintercept=c(1.5, 2.5, 3.5, 4.5), linetype="solid", color="darkgrey") +
+  theme_bw() +
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    #legend.title = element_blank(), 
+    axis.text = element_text(size=12, color="black"), 
+    title = element_text(size=14),
+    #legend.text = element_text(size=12), 
+    #legend.box.background = element_rect(color="black"), 
+    #legend.position = c(0.9, 0.91)
+)
+```
+
+
+
+
+
+
+
+
+```{r}
+ 
+
+my.data.frame <- subset(data , V1 > 2 | V2 < 4)
+
+example <- c(0.02, 0.05, 0.06)
+
+#calculate means in dplyr
+
+cs.summary.feed.fam <- CSdata %>%
+group_by(FeedStrat, Family) %>%
+mutate(n=length(ColdCSActivity), CS.mean.feed.fam=mean(ColdCSActivity), sd.mean.feed.fam=sd(ColdCSActivity), se.mean.feed.fam=sd.mean.feed.fam/sqrt(n))
+
+View(cs.summary.feed.fam)
+
+```
+
+```{r}
+#Boxplot of average CS Activity at 14°C.
+
+pd <- position_dodge(0.8)
+p=ggplot(data=CSdata, aes(x=FeedStrat, y=ColdCSActivity))
+p+geom_boxplot(aes(fill=FeedStrat), position=pd, outlier.alpha=0) +
+  labs(x="Feeding Strategy", y="CS Activity (U/mg protein)") +
+  geom_vline(xintercept=c(1.5, 3.5, 4.5), linetype="solid", color="darkgrey") +
+  scale_fill_manual(values=c("#56B4E9", "#00BF7D")) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        legend.title=element_blank(), 
+        axis.text = element_text(size=12, color="black"), 
+        title = element_text(size=14), 
+        legend.text = element_text(size=12), 
+        legend.box.background = element_rect(color="black"), 
+       # legend.position = c(0.9, 0.91)) 
+  ) +
+ geom_point(data=cs.summary.feed.fam, 
+             aes(x=FeedStrat, y=CS.mean.feed.fam,
+                 group = interaction(FeedStrat, Family), shape=Family), 
+             position = position_dodge(width = 0.8), size=3) +
+  geom_errorbar(data=cs.summary.feed.fam, aes(ymax = CS.mean.feed.fam+se.mean.feed.fam, 
+                                              ymin = CS.mean.feed.fam-se.mean.feed.fam, 
+                                              group=interaction(FeedStrat, Family)), 
+                width=0, position = position_dodge(width = 0.8), alpha=0.5)
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
+#Boxplot of CS Activity at 14°C, scaled for mass. 
+pd <-position_dodge(0.8)
+p=ggplot(data=CSdata, aes(x=FeedStrat, y=ColdCSActivityPerGMass))
+p+geom_boxplot(aes(fill=FeedStrat), position=pd) + 
+  labs(x = "Family", y="CS Activity (U/mg protein/g mass)") + geom_vline(xintercept=c(1.5, 2.5, 3.5, 4.5), linetype="solid", color="darkgrey") +
+  theme_bw() +
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    legend.title = element_blank(), 
+    axis.text = element_text(size=12, color="black"), 
+    title = element_text(size=14),
+    legend.text = element_text(size=12), 
+    legend.box.background = element_rect(color="black"), 
+    legend.position = c(0.9, 0.91))
+
+
+```
+
+
+```{r}
+
+ggplot(data=CSdata, aes(x=Mass, y=ColdCSActivityPerGMass)) + geom_point(aes(shape=Family, color=FeedStrat)) + geom_smooth()
+
+
+```
+
+```{r}
+ggplot(CSdata, aes(x=Mass, y=ColdCSActivity, group= FeedStrat, color=FeedStrat)) +
+  geom_smooth(method=lm, se=T) + geom_point() +
+  labs(x = "Mass (g)", y = "CS Activity (U / mg protein)", color= "Feeding Strategy") + scale_color_manual(values=c("#56B4E9", "#00BF7D")) +
+  theme_bw() +
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(), 
+    axis.text = element_text(size=14), 
+    title = element_text(size=14),
+    strip.text.x = element_text(size=14), 
+    legend.text = element_text(size=12), 
+    legend.position = c(0.8, 0.15), 
+    legend.box.background = element_rect(color="black"))
+```
+
+```{r}
+massMod = lm(ColdCSActivity ~ FeedStrat*Mass, data=CSdata)
+summary(massMod)
+anova(massMod)
+```
+
+##Linear model
+```{r}
+CSmod = lm(ColdCSActivity ~ FeedStrat*Family, data=CSdata)
+plot(CSmod) #Residuals look fine. Data is normally distributed. 
+summary(CSmod)
+Anova(CSmod) #Both feeding strategy and family explain variation in the data! And their interaction borderline explains variation in the data.
+anova(CSmod)
+ggplot(CSmod)
+```
+
+```{r}
+CSmod = lm(ColdCSActivity ~ Mass*Family, data=CSdata)
+plot(CSmod) #Residuals look fine. Data is normally distributed. 
+summary(CSmod)
+Anova(CSmod) #Both feeding strategy and family explain variation in the data! And their interaction borderline explains variation in the data.
+anova(CSmod)
+ggplot(CSmod)
+
+```
+
+
+
+```{r}
+CSmodMass = lm(ColdCSActivity ~ FeedStrat*Family*Mass, data=CSdata)
+plot(CSmodMass)
+summary(CSmodMass)
+anova(CSmodMass)
+
+```
+
