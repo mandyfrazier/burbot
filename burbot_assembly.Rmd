@@ -975,10 +975,6 @@ nohup ./run_BUSCO.sh > log_BUSCO.txt 2> log_BUSCO_error.txt &
 
 
 
-
-
-
-
 #Reducing Volume Size
 You can't make your volume smaller, so you have to make a new smaller volume, mount both volumes to the AWS instance in different directories, then copy the data to the smaller volume and then delete the origianl volume. 
 
