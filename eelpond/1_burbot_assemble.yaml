@@ -34,7 +34,7 @@ trinity:
   #######################################################
   assemblyinput:
   assembly: burbot_assemble.fasta
-  assembly_extension: '_foursample'
+  assembly_extension: '_sixsample'
   ####################  annotate  ####################
 dammit:
   busco_group:     # specify all busco groups below here
