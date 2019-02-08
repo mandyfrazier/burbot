@@ -1,0 +1,47 @@
+
+  ####################  Eelpond Pipeline Configfile  ####################
+basename: burbot_assemble
+experiment: _experiment1
+samples: my_transcriptome_samples.tsv
+
+ ####################  assemble  ####################
+get_data:
+  download_data: false
+  use_ftp: false
+trimmomatic:
+  adapter_file:
+    pe_path: ep_utils/TruSeq3-PE-2.fa
+    se_path: ep_utils/TruSeq3-SE.fa
+  extra: ''
+  trim_cmd: ILLUMINACLIP:{}:2:40:15 LEADING:2 TRAILING:2 SLIDINGWINDOW:4:15 MINLEN:25
+fastqc:
+  extra: ''
+khmer:
+  C: 3
+  Z: 18
+  coverage: 20
+  diginorm: true
+  extra: ''
+  ksize: 20
+  memory: 4e9
+trinity:
+  add_single_to_paired: false
+  input_kmer_trimmed: true
+  input_trimmomatic_trimmed: false
+  max_memory: 30G
+  seqtype: fq
+  extra: ''
+  #######################################################
+  assemblyinput:
+  assembly: burbot_assemble.fasta
+  assembly_extension: '_sixsample'
+  ####################  annotate  ####################
+dammit:
+  busco_group:     # specify all busco groups below here
+  - metazoa
+  - eukaryota
+  db_dir: databases   # specify location for databases (or previously-installed databases)
+  db_install_only: False   # just install databases, don't run annotation
+  db_extra:
+  annot_extra: ' --quick '
+  #######################################################

@@ -1,0 +1,7 @@
+sample	unit	fq1	fq2	condition
+RV01C	R	/home/ubuntu/data/2_Rcorrector/Rcorrected2/Rcorr_trinity/burbot-RV01-C_S187_R1.cor.fq.gz.P.qtrim.gz	/home/ubuntu/data/2_Rcorrector/Rcorrected2/Rcorr_trinity/burbot-RV01-C_S187_R2.cor.fq.gz.P.qtrim.gz	C
+Ma01C	L	/home/ubuntu/data/2_Rcorrector/Rcorrected2/Rcorr_trinity/burbot-Ma01-C_S179_R1.cor.fq.gz.P.qtrim.gz	/home/ubuntu/data/2_Rcorrector/Rcorrected2/Rcorr_trinity/burbot-Ma01-C_S179_R2.cor.fq.gz.P.qtrim.gz	C
+Mb01C	L	/home/ubuntu/data/2_Rcorrector/Rcorrected2/Rcorr_trinity/burbot-Mb01-C_S181_R1.cor.fq.gz.P.qtrim.gz	/home/ubuntu/data/2_Rcorrector/Rcorrected2/Rcorr_trinity/burbot-Mb01-C_S181_R2.cor.fq.gz.P.qtrim.gz	C
+RV08P	R	/home/ubuntu/data/2_Rcorrector/Rcorrected2/Rcorr_trinity/burbot-RV08-P_S188_R1.cor.fq.gz.P.qtrim.gz	/home/ubuntu/data/2_Rcorrector/Rcorrected2/Rcorr_trinity/burbot-RV08-P_S188_R2.cor.fq.gz.P.qtrim.gz	P
+Mc08P	L	/home/ubuntu/data/2_Rcorrector/Rcorrected2/Rcorr_trinity/burbot-Mc08-P_S184_R1.cor.fq.gz.P.qtrim.gz	/home/ubuntu/data/2_Rcorrector/Rcorrected2/Rcorr_trinity/burbot-Mc08-P_S184_R2.cor.fq.gz.P.qtrim.gz	P
+Md09P	L	/home/ubuntu/data/2_Rcorrector/Rcorrected2/Rcorr_trinity/burbot-Md09-P_S186_R1.cor.fq.gz.P.qtrim.gz	/home/ubuntu/data/2_Rcorrector/Rcorrected2/Rcorr_trinity/burbot-Md09-P_S186_R2.cor.fq.gz.P.qtrim.gz	P
