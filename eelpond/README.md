@@ -45,3 +45,7 @@ This requires two files: my_transcriptome_samples.tsv and 1_burbot_assemble.yaml
 #### To run
 ./run_eelpond assemblyinput quantify diffexp
 
+
+## Run notes and important details for paper
+
+In this protocol we are running trimmomatic with *just* Illuminaclip, because we're starting with reads that were already trimmed and Rcorrected, but the pipeline will break if we skip the trimming entirely. So, we're doing a trim step to generate the intermediate files, but the trim step won't actually do any trimming. The trim parameters used for the real trimming step were: sliding window 4:5, leading:5, trailing:5, minlen:25
