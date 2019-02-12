@@ -3,7 +3,7 @@
 basename: burbot_assemble
 experiment: _experiment1
 samples: my_transcriptome_samples.tsv
-out_path: OUTPUT_PATH
+out_path: /home/ubuntu/data
 
  ####################  assemble  ####################
 get_data:
