@@ -3,6 +3,7 @@
 basename: burbot_assemble
 experiment: _experiment1
 samples: my_transcriptome_samples.tsv
+out_path: /home/ubuntu/data
 
  ####################  assemble  ####################
 get_data:
@@ -34,7 +35,7 @@ trinity:
   #######################################################
   assemblyinput:
   assembly: burbot_assemble.fasta
-  assembly_extension: '_sixsample'
+  assembly_extension: '_foursample'
   ####################  annotate  ####################
 dammit:
   busco_group:     # specify all busco groups below here
