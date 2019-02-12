@@ -2,6 +2,7 @@
 basename: burbot_assemble
 experiment: _experiment1
 samples: all_my_samples.tsv
+out_path: /home/ubuntu/data
 
 assemblyinput:
   assembly: burbot_assemble.fasta
