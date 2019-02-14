@@ -26,8 +26,11 @@ This requires two files: my_transcriptome_samples.tsv and 1_burbot_assemble.yaml
 You should probably run this in a screen session so it can run while you're away:
 
 `screen`
+
 `cd eelpond/`
+
 `conda activate eelpond`
+
 `./run_eelpond 1_burbot_assemble.yaml assemble annotate`
 
 then *briefly* hit: 'control' and 'r' at the same time, then the letter 'd' to get out of your screen session.
