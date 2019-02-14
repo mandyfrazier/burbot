@@ -31,7 +31,6 @@ trinity:
   input_trimmomatic_trimmed: false
   max_memory: 180G
   seqtype: fq
-  CPU: 46
   extra: ''
   #######################################################
   assemblyinput:
