@@ -57,7 +57,7 @@ For the assembly, we're using four individuals from the same family (Ma) that ar
 
 After assembly, I compared the 40-sample transcriptome to the 4-sample transcriptome using ./TrinityStats, sourmash and BUSCO. The number of total trinity transcripts decreased from 793,202 to 387,175. 
 
-Sourmash: 
+###Sourmash: 
 
 Build a signature for the large transcriptome: 
 
@@ -73,7 +73,7 @@ Compare transcriptomes:
 
 Result was 54.8% similarity (54.8% of the 40-sample transcriptome is contained in the 4-sample transcriptome). This is only comparing the k-mers, it doesn't tell you which transcriptome is more complete. 
 
-BUSCO: 
+###BUSCO: 
 
 40-sample transcriptome: 
 
