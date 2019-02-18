@@ -54,3 +54,72 @@ This requires two files: my_transcriptome_samples.tsv and 1_burbot_assemble.yaml
 In this protocol we are running trimmomatic with *just* Illuminaclip, because we're starting with reads that were already trimmed and Rcorrected, but the pipeline will break if we skip the trimming entirely. So, we're doing a trim step to generate the intermediate files, but the trim step won't actually do any trimming. The trim parameters used for the real trimming step were: sliding window 4:5, leading:5, trailing:5, minlen:25
 
 For the assembly, we're using four individuals from the same family (Ma) that are all non-cannibals. I chose to use the non-cannibals because this is the more "normal" feeding strategy and a lake-adapted family because that's more representative of all the samples we have. I used the Ma family arbitrarily, it was the first family in the list. Reducing the genetic variability and using four individuals instead of 40 will help reduce the number of total transcripts and will make the assembly better because there should be fewer mutations. 
+
+After assembly, I compared the 40-sample transcriptome to the 4-sample transcriptome using ./TrinityStats, sourmash and BUSCO. The number of total trinity transcripts decreased from 793,202 to 387,175. 
+
+Sourmash: 
+
+Build a signature for the large transcriptome: 
+
+`sourmash compute --scaled 10000 -k 31 ~/data/3_Trinity/burbot_trinity.fasta -o burbot_large.sig`
+
+Build a signature for the small transcriptome: 
+
+`sourmash compute --scaled 10000 -k 31 /home/ubuntu/data/burbot_assemble_out__experiment1/assembly/burbot_assemble_trinity.fasta -o burbot_small.sig`
+
+Compare transcriptomes:
+
+`sourmash search -k 31 burbot_large.sig burbot_small.sig --containment`
+
+Result was 54.8% similarity (54.8% of the 40-sample transcriptome is contained in the 4-sample transcriptome). This is only comparing the k-mers, it doesn't tell you which transcriptome is more complete. 
+
+BUSCO: 
+
+40-sample transcriptome: 
+
+Download eukaryota dataset
+`wget https://busco.ezlab.org/datasets/eukaryota_odb9.tar.gz
+gunzip eukaryota_odb9.tar.gz
+tar -xvf eukaryota_odb9.tar`
+
+Run BUSCO
+`run_BUSCO.py -i Trinity.fasta -o burbot_busco_eukaryota \
+-l eukaryota_odb9 -m transcriptome --cpu 4`
+
+Results: C:97.4%[S:24.8%,D:72.6%],F:2.6%,M:0.0%,n:303 
+Running time: <1 hr 
+
+Download fish dataset
+`wget https://busco.ezlab.org/datasets/actinopterygii_odb9.tar.gz
+gunzip actinopterygii_odb9.tar.gz
+tar -xvf actinopterygii_odb9.tar`
+
+Run BUSCO
+`run_BUSCO.py -i Trinity.fasta -o burbot_busco_fish -l actinopterygii_odb9 -m transcriptome --cpu 4`
+
+Results: C:81.0%[S:27.9%,D:53.1%],F:13.6%,M:5.4%,n:4584
+Running time: ~3 days 
+
+
+
+4-sample transcriptome: 
+
+`run_BUSCO.py -i /home/ubuntu/data/burbot_assemble_out__experiment1/assembly/burbot_assemble_trinity.fasta -o burbot2_busco_eukaryota -l eukaryota_odb9 -m transcriptome --cpu 6`
+
+Output: C:99.0%[S:36.0%,D:63.0%],F:0.0%,M:1.0%,n:303   
+Time to compute: 20 minutes 
+
+`run_BUSCO.py -i /home/ubuntu/data/burbot_assemble_out__experiment1/assembly/burbot_assemble_trinity.fasta -o burbot2_busco_fish -l actinopterygii_odb9 -m transcriptome --cpu 7`
+
+Results: C:91.9%[S:36.9%,D:55.0%],F:4.8%,M:3.3%,n:4584 
+Time to compute: ~6 hours 
+
+
+So, the BUSCO score of the 40-sample transcriptome against actinopterygii was 81%, but it was 92% for the 4-sample transcriptome. This tells us that the loss of transcripts in Trinity for the 4-sample was mostly error-filled transcripts! 
+
+
+
+
+
+
+
