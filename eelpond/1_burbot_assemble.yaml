@@ -44,5 +44,5 @@ dammit:
   - actinopterygii 
   db_dir: databases   # specify location for databases (or previously-installed databases)
   db_install_only: False   # just install databases, don't run annotation
-  annot_extra: ' --quick '
+  annot_extra: ' --quick ' '--n_threads 7'
   #######################################################
