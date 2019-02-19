@@ -51,13 +51,20 @@ This requires two files: my_transcriptome_samples.tsv and 1_burbot_assemble.yaml
 
 ## Run notes and important details for paper
 
+
 In this protocol we are running trimmomatic with *just* Illuminaclip, because we're starting with reads that were already trimmed and Rcorrected, but the pipeline will break if we skip the trimming entirely. So, we're doing a trim step to generate the intermediate files, but the trim step won't actually do any trimming. The trim parameters used for the real trimming step were: sliding window 4:5, leading:5, trailing:5, minlen:25
 
 For the assembly, we're using four individuals from the same family (Ma) that are all non-cannibals. I chose to use the non-cannibals because this is the more "normal" feeding strategy and a lake-adapted family because that's more representative of all the samples we have. I used the Ma family arbitrarily, it was the first family in the list. Reducing the genetic variability and using four individuals instead of 40 will help reduce the number of total transcripts and will make the assembly better because there should be fewer mutations. 
 
 After assembly, I compared the 40-sample transcriptome to the 4-sample transcriptome using ./TrinityStats, sourmash and BUSCO. The number of total trinity transcripts decreased from 793,202 to 387,175. 
 
-###Sourmash: 
+
+### Fix for 'real' runthrough
+
+- no thread calls in the yaml, do it in the origianl eelpond call
+- just `experiment1` not `_experiment1`
+
+## Sourmash: 
 
 Build a signature for the large transcriptome: 
 
@@ -73,7 +80,7 @@ Compare transcriptomes:
 
 Result was 54.8% similarity (54.8% of the 40-sample transcriptome is contained in the 4-sample transcriptome). This is only comparing the k-mers, it doesn't tell you which transcriptome is more complete. 
 
-###BUSCO: 
+## BUSCO: 
 
 40-sample transcriptome: 
 
