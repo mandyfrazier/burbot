@@ -27,9 +27,9 @@ deseq2:
   gene_trans_map: True
     # contrasts for the deseq2 results method
   contrasts:
-    time0-vs-time6:
-      - time0
-      - time6
+    C-vs-P:
+      - C
+      - P
   pca:
     labels:
       # columns of sample sheet to use for PCA
