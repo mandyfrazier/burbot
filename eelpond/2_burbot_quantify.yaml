@@ -5,7 +5,7 @@ samples: all_my_samples.tsv
 out_path: /home/ubuntu/data
 
 assemblyinput:
-  assembly: burbot_assemble.fasta
+  assembly: burbot_assemble_trinity.fasta.dammit.fasta
   assembly_extension: '_foursample'
 ####################  diffexp  ####################
 get_data:
