@@ -29,9 +29,9 @@ trinity:
   add_single_to_paired: false
   input_kmer_trimmed: true
   input_trimmomatic_trimmed: false
-  max_memory: 30G
+  max_memory: 180G
   seqtype: fq
-  extra: ''
+  extra: ' --CPU 46 '
   #######################################################
   assemblyinput:
   assembly: burbot_assemble.fasta
@@ -41,8 +41,8 @@ dammit:
   busco_group:     # specify all busco groups below here
   - metazoa
   - eukaryota
+  - actinopterygii 
   db_dir: databases   # specify location for databases (or previously-installed databases)
   db_install_only: False   # just install databases, don't run annotation
-  db_extra:
   annot_extra: ' --quick '
   #######################################################

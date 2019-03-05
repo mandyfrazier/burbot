@@ -5,7 +5,7 @@ samples: all_my_samples.tsv
 out_path: /home/ubuntu/data
 
 assemblyinput:
-  assembly: burbot_assemble.fasta
+  assembly: burbot_assemble_trinity.fasta.dammit.fasta
   assembly_extension: '_foursample'
 ####################  diffexp  ####################
 get_data:
@@ -27,29 +27,10 @@ deseq2:
   gene_trans_map: True
     # contrasts for the deseq2 results method
   contrasts:
-    time0-vs-time6:
-      - time0
-      - time6
+    C-vs-P:
+      - C
+      - P
   pca:
     labels:
       # columns of sample sheet to use for PCA
       - condition
-  #######################################################
-   ####################  quantify  ####################
-get_data:
-  download_data: false
-  use_ftp: false
-trimmomatic:
-  adapter_file:
-    pe_path: ep_utils/TruSeq3-PE-2.fa
-    se_path: ep_utils/TruSeq3-SE.fa
-  extra: ''
-  trim_cmd: ILLUMINACLIP:{}:2:40:15 LEADING:2 TRAILING:2 SLIDINGWINDOW:4:15 MINLEN:25
-salmon:
-  input_trimmomatic_trimmed: True
-    index_params:
-      extra: '' 
-    quant_params:
-      libtype: A
-      extra: ''
-  #######################################################
