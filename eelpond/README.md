@@ -46,7 +46,7 @@ This requires two files: my_transcriptome_samples.tsv and 1_burbot_assemble.yaml
  - 2_burbot_quantify.yaml: a yaml file detailing the programs to be used and the specific parameters for each program
 
 #### To run
-./run_eelpond assemblyinput quantify diffexp
+./run_eelpond 2_burbot_quantify.yaml assemblyinput quantify diffexp
 
 
 ## Run notes and important details for paper
