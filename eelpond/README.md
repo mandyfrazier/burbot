@@ -63,7 +63,6 @@ After assembly, I compared the 40-sample transcriptome to the 4-sample transcrip
 
 - no thread calls in the yaml, do it in the origianl eelpond call
 - just `experiment1` not `_experiment1`
-- add `input_trimmomatic_trimmed: False` to Salmon because our input reads are already trimmed (?) 
 
 ## Sourmash: 
 
