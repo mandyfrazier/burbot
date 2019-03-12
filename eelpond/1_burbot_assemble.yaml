@@ -39,10 +39,9 @@ trinity:
   ####################  annotate  ####################
 dammit:
   busco_group:     # specify all busco groups below here
-  - metazoa
-  - eukaryota
+  - vertebrata
   - actinopterygii 
   db_dir: databases   # specify location for databases (or previously-installed databases)
   db_install_only: False   # just install databases, don't run annotation
-  annot_extra: ' --quick --user-databases GadusMorhua'
+  annot_extra: ' --quick --user-databases Gadus_morhua.gadMor1.pep.all.fa'
   #######################################################
