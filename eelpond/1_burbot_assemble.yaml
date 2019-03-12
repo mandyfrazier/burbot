@@ -31,7 +31,7 @@ trinity:
   input_trimmomatic_trimmed: false
   max_memory: 180G
   seqtype: fq
-  extra: ' --CPU 46 '
+  extra: ''
   #######################################################
   assemblyinput:
   assembly: burbot_assemble.fasta
