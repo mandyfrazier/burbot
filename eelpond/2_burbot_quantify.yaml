@@ -6,7 +6,7 @@ out_path: /home/ubuntu/data
 
 assemblyinput:
   assembly: burbot_assemble_trinity.fasta.dammit.fasta
-  assembly_extension: '_foursample'
+  assembly_extension: '_twosample'
 ####################  diffexp  ####################
 get_data:
   download_data: false
