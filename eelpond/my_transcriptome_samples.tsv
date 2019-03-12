@@ -1,5 +1,3 @@
 sample	unit	fq1	fq2	condition
 Ma07P	L	/home/ubuntu/data/2_Rcorrector/Rcorrected2/Rcorr_trinity/burbot-Ma07-P_S180_R1.cor.fq.gz.P.qtrim.gz	/home/ubuntu/data/2_Rcorrector/Rcorrected2/Rcorr_trinity/burbot-Ma07-P_S180_R2.cor.fq.gz.P.qtrim.gz	P
-Ma10P	L	/home/ubuntu/data/2_Rcorrector/Rcorrected2/Rcorr_trinity/burbot-Ma10-P_S190_R1.cor.fq.gz.P.qtrim.gz	/home/ubuntu/data/2_Rcorrector/Rcorrected2/Rcorr_trinity/burbot-Ma10-P_S190_R2.cor.fq.gz.P.qtrim.gz	P
 Ma01C	L	/home/ubuntu/data/2_Rcorrector/Rcorrected2/Rcorr_trinity/burbot-Ma01-C_S179_R1.cor.fq.gz.P.qtrim.gz	/home/ubuntu/data/2_Rcorrector/Rcorrected2/Rcorr_trinity/burbot-Ma01-C_S179_R2.cor.fq.gz.P.qtrim.gz	C
-Ma02C	L	/home/ubuntu/data/2_Rcorrector/Rcorrected2/Rcorr_trinity/burbot-Ma02-C_S189_R1.cor.fq.gz.P.qtrim.gz	/home/ubuntu/data/2_Rcorrector/Rcorrected2/Rcorr_trinity/burbot-Ma02-C_S189_R2.cor.fq.gz.P.qtrim.gz	C
