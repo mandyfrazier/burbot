@@ -31,7 +31,7 @@ You should probably run this in a screen session so it can run while you're away
 
 `conda activate eelpond`
 
-`./run_eelpond 1_burbot_assemble.yaml assemble annotate`
+`./run_eelpond 1_burbot_assemble.yaml assemble annotate --threads 46`
 
 then *briefly* hit: 'control' and 'r' at the same time, then the letter 'd' to get out of your screen session.
 
