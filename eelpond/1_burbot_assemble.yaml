@@ -41,7 +41,7 @@ dammit:
   busco_group:     # specify all busco groups below here
   - vertebrata
   - actinopterygii 
-  db_dir: databases   # specify location for databases (or previously-installed databases)
+  db_dir: /home/ubuntu/data/databases   # specify location for databases (or previously-installed databases)
   db_install_only: False   # just install databases, don't run annotation
-  annot_extra: ' --quick --user-databases Gadus_morhua.gadMor1.pep.all.fa'
+  annot_extra: '--user-databases /home/ubuntu/data/databases/Edit_Gadus_morhua.gadMor1.pep.all.fa'
   #######################################################
