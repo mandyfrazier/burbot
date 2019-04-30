@@ -127,12 +127,16 @@ So, the BUSCO score of the 40-sample transcriptome against actinopterygii was 81
 
 ## Code to parse dammit output 
 
+The first time we ran the differential expression, we were using trinity contig numbers. But this included all of the different isoforms as separate contigs, so the count was super big (no collapsing). The second time, we ran it using the trinity-identified "genes", which collapsed based on what Trinity thinks are likely genes. However, what we really want to do is collapse genes based on the dammit annotation from the Ensembl Atlantic cod transcriptome. The intitial GFF file from dammit includes all of the different gene "options" for each transcript that it found, but we need to assign it what we think is the most likely annoation. There are different metrics you can use to choose which annotation we assign to each transcript, we chose based on the longest match length. This code is how we splice the output from dammit to generate one annotation per transcript. 
 
+Are the reads them collapsed in tximport? 
 
 ```
 gff_file = "~/data/burbot_assemble_out_run2/annotation/burbot_assemble_trinity.fasta.dammit/burbot_assemble_trinity.fasta.dammit.gff3"
 annotations = GFF3Parser(filename=gff_file).read()
+# Keeps track of long the annotation is 
 annotations["length"] = annotations["end"].subtract(annotations["start"], fill_value=0)
+# make new table for each with seqid, Name, start, end, length
 annotations = annotations.loc[annotations['database'] == "Edit_Gadus_morhua.gadMor1.pep.all.fa"]
 annotations = annotations.sort_values(by=['seqid','length'],ascending=False).drop_duplicates(subset='seqid')[['seqid', 'Name','start','end','length']]
 annotations = annotations.rename(columns = {'Name':'Ensembl'})
@@ -140,7 +144,7 @@ print('ensembl annotations',annotations.shape)
 new_file = annotations.dropna(axis=0,how='all')
 new_file.head()
 
-
+# to rename in transmap file: 
 conversion = pd.read_csv("~/data/burbot_assemble_out_run2/annotation/burbot_assemble_trinity.fasta.dammit/burbot_assemble_trinity.fasta.dammit.namemap.csv")
 conversion['contig'], conversion['info'] = conversion['original'].str.split(' ', 1).str
 conversion['seqid'] = conversion['renamed']
