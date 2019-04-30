@@ -125,6 +125,31 @@ Time to compute: ~6 hours
 So, the BUSCO score of the 40-sample transcriptome against actinopterygii was 81%, but it was 92% for the 4-sample transcriptome. This tells us that the loss of transcripts in Trinity for the 4-sample was mostly error-filled transcripts! 
 
 
+## Code to parse dammit output 
+
+
+
+```
+gff_file = "~/data/burbot_assemble_out_run2/annotation/burbot_assemble_trinity.fasta.dammit/burbot_assemble_trinity.fasta.dammit.gff3"
+annotations = GFF3Parser(filename=gff_file).read()
+annotations["length"] = annotations["end"].subtract(annotations["start"], fill_value=0)
+annotations = annotations.loc[annotations['database'] == "Edit_Gadus_morhua.gadMor1.pep.all.fa"]
+annotations = annotations.sort_values(by=['seqid','length'],ascending=False).drop_duplicates(subset='seqid')[['seqid', 'Name','start','end','length']]
+annotations = annotations.rename(columns = {'Name':'Ensembl'})
+print('ensembl annotations',annotations.shape)
+new_file = annotations.dropna(axis=0,how='all')
+new_file.head()
+
+
+conversion = pd.read_csv("~/data/burbot_assemble_out_run2/annotation/burbot_assemble_trinity.fasta.dammit/burbot_assemble_trinity.fasta.dammit.namemap.csv")
+conversion['contig'], conversion['info'] = conversion['original'].str.split(' ', 1).str
+conversion['seqid'] = conversion['renamed']
+conversion = conversion[['contig','seqid']]
+contigs_w_expression_conversion = pd.merge(conversion, new_file, on="seqid")
+contigs_w_expression_conversion = contigs_w_expression_conversion[['Ensembl','seqid']]
+contigs_w_expression_conversion.to_csv("~/data/burbot_assemble_out_run2/annotation/burbot_assemble_trinity.fasta.dammit/burbot_assemble_Ensembl.fasta.dammit.namemap.csv", index=False)
+```
+
 
 
 
