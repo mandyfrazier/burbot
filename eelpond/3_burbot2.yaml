@@ -1,19 +1,17 @@
-  ####################  Eelpond Pipeline Configfile  ####################
+####################  Eelpond Pipeline Configfile  ####################
 basename: burbot_assemble
 experiment: run2
-samples: all_my_samples.tsv
 out_path: /home/ubuntu/data
-get_reference:
-  reference: ~/data/burbot_assemble_out_run2/annotation/burbot_assemble_trinity.fasta.dammit/burbot_assemble_trinity.fasta.dammit.fasta
-  gene_trans_map: /home/ubuntu/data/burbot_assemble_out_run2/assembly/burbot_assemble_trinity.fasta.gene_trans_map
-  reference_extension: '_twosample'
-  download_ref: false
-  use_ftp: false
-####################  diffexp  ####################
+
+assemblyinput:
+  assembly: ~/data/burbot_assemble_out_run2/annotation/burbot_assemble_trinity.fasta.dammit/burbot_assemble_trinity.fasta.dammit.fasta
+  assembly_extension: '_twosample'
+#################### get_data #####################
 get_data:
   samples: all_my_samples.tsv
   download_data: false
   use_ftp: false
+####################  diffexp  ####################
 trimmomatic:
   adapter_file:
     pe_path: ep_utils/TruSeq3-PE-2.fa
@@ -27,7 +25,7 @@ salmon:
       libtype: A
       extra: ''
 deseq2:
-  gene_trans_map: True
+  gene_trans_map: ~/data/burbot_assemble_out_run2/annotation/burbot_assemble_trinity.fasta.dammit/burbot_assemble_Ensembl.fasta.dammit.namemap.csv
     # contrasts for the deseq2 results method
   contrasts:
     C-vs-P:

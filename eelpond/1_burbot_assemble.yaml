@@ -7,6 +7,7 @@ out_path: /home/ubuntu/data
 
  ####################  assemble  ####################
 get_data:
+  samples: my_transcriptome_samples.tsv
   download_data: false
   use_ftp: false
 trimmomatic:
@@ -43,5 +44,5 @@ dammit:
   - actinopterygii 
   db_dir: /home/ubuntu/data/databases   # specify location for databases (or previously-installed databases)
   db_install_only: False   # just install databases, don't run annotation
-  annot_extra: '--user-databases /home/ubuntu/data/databases/Edit_Gadus_morhua.gadMor1.pep.all.fa'
+  annot_extra: '--quick --user-databases /home/ubuntu/data/databases/Edit_Gadus_morhua.gadMor1.pep.all.fa'
   #######################################################

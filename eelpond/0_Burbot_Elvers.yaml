@@ -1,0 +1,62 @@
+####################  Elvers Pipeline Configfile  ####################
+workflows:
+  - trinity
+  - dammit
+  - salmon
+  - deseq2
+
+basename: burbot_pipeline
+experiment: may
+out_path: /home/ubuntu/data
+
+ ####################  assemble  ####################
+get_data:
+  samples: all_my_samples.tsv
+  download_data: false
+  use_ftp: false
+khmer:
+  C: 3
+  Z: 18
+  coverage: 20
+  diginorm: true
+  extra: ''
+  ksize: 20
+  memory: 4e9
+trinity:
+  assembly_subset:
+    - Ma07P
+    - Ma01C
+  add_single_to_paired: false
+  input_kmer_trimmed: false
+  input_trimmed: false
+  max_memory: 180G
+  seqtype: fq
+  extra: ''
+    ####################  annotate  ####################
+dammit:
+  busco_group:     # specify all busco groups below here
+  - vertebrata
+  - actinopterygii
+  db_dir: /home/ubuntu/data/databases   # specify location for databases (or previously-installed databases)
+  db_install_only: False   # just install databases, don't run annotation
+  annot_extra: '--quick --user-databases /home/ubuntu/data/databases/Edit_Gadus_morhua.gadMor1.pep.all.fa'
+  #######################################################
+  ####################  diffexp  ####################
+salmon:
+    index_params:
+      extra: ''
+    input_trimmed: false
+    quant_params:
+      libtype: A
+      extra: ''
+deseq2:
+  gene_trans_map: True
+    # contrasts for the deseq2 results method
+  contrasts:
+    C-vs-P:
+      - C
+      - P
+  pca:
+    labels:
+      # columns of sample sheet to use for PCA
+      - condition
