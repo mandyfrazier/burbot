@@ -39,7 +39,9 @@ dammit:
   - actinopterygii
   db_dir: /home/ubuntu/data/databases   # specify location for databases (or previously-installed databases)
   db_install_only: False   # just install databases, don't run annotation
-  annot_extra: '--quick --user-databases /home/ubuntu/data/databases/Edit_Gadus_morhua.gadMor1.pep.all.fa'
+  annot_extra: '--full --user-databases /home/ubuntu/data/databases/Edit_Gadus_morhua.gadMor1.pep.all.fa'
+  # --full flag to use all of the dammit supplied databases
+  # User supplied database from Ensembl and updated 11/19/19 ftp://ftp.ensembl.org/pub/release-99/fasta/gadus_morhua/pep/
   #######################################################
   ####################  diffexp  ####################
 salmon:
