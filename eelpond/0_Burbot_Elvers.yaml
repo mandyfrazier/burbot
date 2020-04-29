@@ -6,7 +6,7 @@ workflows:
   - deseq2
 
 basename: burbot_pipeline
-experiment: may
+experiment: may2020
 out_path: /home/ubuntu/data
 
  ####################  assemble  ####################
