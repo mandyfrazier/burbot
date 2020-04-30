@@ -11,7 +11,7 @@ out_path: /home/ubuntu/data
 
  ####################  assemble  ####################
 get_data:
-  samples: /home/ubuntu/burbot/eelpond/all_my_samples.tsv
+  samples: all_my_samples.tsv
   download_data: false
   use_ftp: false
 khmer:
