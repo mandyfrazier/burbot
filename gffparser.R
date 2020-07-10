@@ -24,7 +24,7 @@ trinitymappings <- separate(data = trinitymappings, col = seqid,
 # The gff reader doesn't parse out the attribute lists, which is where the database info is. 
 # We need to sort on database, so we need to parse out the attributes
 
-trinitymappings$Name <- trinitymappings$attributes %>% str_extract(pattern = "Name=\\w+") %>% str_replace(pattern = "Name=", replacement = "")
+trinitymappings$Name <- trinitymappings$attributes %>% str_extract(pattern = "Name=.+(?=;Target)") %>% str_replace(pattern = "Name=", replacement = "")
 trinitymappings$ID <- trinitymappings$attributes %>% str_extract(pattern = "ID=[:graph:]+:[:alnum:]+") %>% str_replace(pattern = "ID=", replacement = "")
 trinitymappings$Target <- trinitymappings$attributes %>% str_extract(pattern = "Target=.+\\+") %>% str_replace(pattern = "Target=", replacement = "")
 trinitymappings$database <- trinitymappings$attributes %>% str_extract(pattern = "database=[:graph:]+|Dbxref=.+") %>% str_replace(pattern = "database=", replacement = "") %>% str_replace(pattern = 'Dbxref="Pfam:.*', replacement = "Pfam")
